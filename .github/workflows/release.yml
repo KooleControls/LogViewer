@@ -1,0 +1,79 @@
+name: Build and Release Application Files
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+        fetch-depth: 0
+
+    - name: Install Visual Studio Build Tools
+      uses: microsoft/setup-msbuild@v1
+      with:
+        vs-version: latest
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.x'
+        
+    - name: Extract Version
+      id: get_version
+      uses: battila7/get-version-action@v2.2.1
+
+    - name: Set project version
+      id: set_version
+      uses: vers-one/dotnet-project-version-updater@v1.6
+      with:
+        file: "LogViewer/LogViewer.csproj"
+        version: ${{ steps.get_version.outputs.version-without-v }}
+
+    - name: Restore dependencies
+      run: dotnet restore "LogViewer/LogViewer.csproj"
+
+    - name: Build solution
+      run: dotnet build "LogViewer/LogViewer.csproj" --configuration Release
+
+    - name: Publish the application (Portable)
+      run: dotnet publish "LogViewer/LogViewer.csproj" -c Release -o ./publish/portable
+
+    - name: Create zip archive (Portable)
+      run: |
+        $tag = "${{ github.ref_name }}"
+        $zipName = "LogViewer_Portable_$tag.zip"
+        Write-Output "Creating $zipName..."
+        powershell Compress-Archive -Path ./publish/portable/* -DestinationPath ./$zipName
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        #body_path: notes/${{ github.ref_name }}.md  # Reference the correct release notes file based on the tag
+        draft: false
+        prerelease: false
+
+    - name: Upload Portable Version
+      id: upload-release-asset-portable
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./LogViewer_Portable_${{ github.ref_name }}.zip
+        asset_name: LogViewer_Portable_${{ github.ref_name }}.zip
+        asset_content_type: application/zip
+        label: "LogViewer Portable Version"
+
