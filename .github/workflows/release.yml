@@ -37,8 +37,14 @@ jobs:
         file: "LogViewer/LogViewer.csproj"
         version: ${{ steps.get_version.outputs.version-without-v }}
 
+    - name: Setup NuGet credentials
+      run: |
+        $nugetConfig = Get-Content "nuget.config"
+        $updated = $nugetConfig -replace '%AZURE_ARTIFACTS_PAT%', "${{ secrets.AZURE_ARTIFACTS_PAT }}"
+        Set-Content "nuget.config" $updated
+
     - name: Restore dependencies
-      run: dotnet restore "LogViewer/LogViewer.csproj"
+      run: dotnet restore "LogViewer/LogViewer.csproj" --configfile nuget.config
 
     - name: Build solution
       run: dotnet build "LogViewer/LogViewer.csproj" --configuration Release
