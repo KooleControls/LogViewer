@@ -82,35 +82,23 @@ namespace LogViewer
             await apiSourceControl1.LoadOrganisations(config.Organisations.Values.ToList());
         }
 
-
-        private async Task CheckForUpdates()
+        private async Task<bool> CheckForApplicationUpdates()
         {
-
-            toolStripStatusLabel1.Text = "Checking for application updates";
             Version? version = Assembly.GetExecutingAssembly().GetName().Version;
             var checker = new GithubUpdateChecker("KooleControls", "LogViewer");
             var latestVersion = await checker.GetLatestVersionAsync();
-            bool applicationUpdateAvailable = latestVersion > version;
+            return latestVersion > version; 
+        }
 
-            if (applicationUpdateAvailable)
-            {
-                toolStripStatusLabel1.Text = $"New application version available: {latestVersion}";
-                toolStripStatusLabel1.IsLink = true;
-                toolStripStatusLabel1.Click += (sender, e) => {
-                    var url = $"https://github.com/KooleControls/LogViewer/releases";
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = url,
-                        UseShellExecute = true
-                    });
-                };
-                // When there is a new application, dont check for config updates
-                return;
-            }
+        private async Task<bool> CheckForConfigurationUpdates()
+        {
+            return await configurationService.DownloadIfUpdatedAsync();
+        }
 
+        private async Task CheckForUpdates()
+        {
             toolStripStatusLabel1.Text = "Checking for config updates";
-            bool configUpdateAvailable = await configurationService.DownloadIfUpdatedAsync();
-
+            bool configUpdateAvailable = await CheckForConfigurationUpdates();
             if (configUpdateAvailable)
             {
                 toolStripStatusLabel1.Text = "New config available, reloading...";
@@ -125,6 +113,22 @@ namespace LogViewer
                 }
             }
 
+            toolStripStatusLabel1.Text = "Checking for application updates";
+            bool applicationUpdateAvailable = await CheckForApplicationUpdates();
+            if (applicationUpdateAvailable)
+            {
+                toolStripStatusLabel1.Text = $"New application version available";
+                toolStripStatusLabel1.IsLink = true;
+                toolStripStatusLabel1.Click += (sender, e) => {
+                    var url = $"https://github.com/KooleControls/LogViewer/releases";
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = url,
+                        UseShellExecute = true
+                    });
+                };
+                return;
+            }
 
             toolStripStatusLabel1.Text = "Up-to-date";
         }

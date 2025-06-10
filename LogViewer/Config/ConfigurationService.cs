@@ -39,6 +39,10 @@ namespace LogViewer.Config
             EnsureDefaultConfigExists();
             EnsureSchemaExists();
             EnsureVsCodeSettingsExists();
+
+#if DEBUG
+            EnsureDebuggingSchemaExists();
+#endif
         }
 
         private static IConfigMerger BuildMerger()
@@ -96,6 +100,38 @@ namespace LogViewer.Config
 
             Directory.CreateDirectory(Path.GetDirectoryName(SchemaFile)!);
             File.WriteAllText(SchemaFile, newSchema);
+        }
+
+        public void EnsureDebuggingSchemaExists()
+        {
+            DirectoryInfo? slnPath = TryGetSolutionDirectoryInfo();
+            if (slnPath == null)
+                return;
+
+            string schemaFile = Path.Combine(slnPath.FullName, "Config", "schema.json");
+            var newSchema = _schemaBuilder.GetSchema();
+
+            if (File.Exists(schemaFile))
+            {
+                var existingSchema = File.ReadAllText(schemaFile);
+
+                if (existingSchema == newSchema)
+                    return;
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(schemaFile)!);
+            File.WriteAllText(schemaFile, newSchema);
+        }
+
+        private static DirectoryInfo? TryGetSolutionDirectoryInfo(string currentPath = null)
+        {
+            var directory = new DirectoryInfo(
+                currentPath ?? Directory.GetCurrentDirectory());
+            while (directory != null && !directory.GetFiles("*.sln").Any())
+            {
+                directory = directory.Parent;
+            }
+            return directory;
         }
     }
 }
