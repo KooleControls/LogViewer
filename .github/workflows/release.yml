@@ -25,6 +25,8 @@ jobs:
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: '8.x'
+      env:
+        NUGET_AUTH_TOKEN: ${{ secrets.AZURE_ARTIFACTS_PAT }} 
         
     - name: Extract Version
       id: get_version
@@ -36,16 +38,6 @@ jobs:
       with:
         file: "LogViewer/LogViewer.csproj"
         version: ${{ steps.get_version.outputs.version-without-v }}
-
-    - name: Setup NuGet credentials
-      run: |
-        $nugetConfig = Get-Content "nuget.config"
-        $updated = $nugetConfig -replace '%AZURE_ARTIFACTS_PAT%', "${{ secrets.AZURE_ARTIFACTS_PAT }}"
-        Set-Content "nuget.config" $updated
-        
-    - name: Show nuget.config
-      run: Get-Content nuget.config
-
 
     - name: Restore dependencies
       run: dotnet restore "LogViewer/LogViewer.csproj" --configfile nuget.config
