@@ -105,12 +105,8 @@ namespace LogViewer
                 // Reload the configuration
                 var config = await configurationService.GetConfigAsync();
                 if (config != null)
-                {
-                    // Load the first profile from the updated config
-                    var profile = config.Profiles.FirstOrDefault().Value;
-                    if (profile != null)
-                        LoadProfile(config, profile);
-                }
+                    await LoadConfig(config);
+
             }
 
             toolStripStatusLabel1.Text = "Checking for application updates";
