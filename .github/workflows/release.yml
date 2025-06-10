@@ -25,8 +25,6 @@ jobs:
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: '8.x'
-      env:
-        NUGET_AUTH_TOKEN: ${{ secrets.AZURE_ARTIFACTS_PAT }} 
         
     - name: Extract Version
       id: get_version
@@ -38,6 +36,18 @@ jobs:
       with:
         file: "LogViewer/LogViewer.csproj"
         version: ${{ steps.get_version.outputs.version-without-v }}
+        
+    - name: Add Azure DevOps feed with PAT
+      run: |
+        dotnet nuget add source "https://pkgs.dev.azure.com/koolecontrols/_packaging/koolecontrols/nuget/v3/index.json" `
+          --name "KooleControls" `
+          --username "AzureDevOps" `
+          --password "${{ secrets.AZURE_ARTIFACTS_PAT }}" `
+          --store-password-in-clear-text `
+          --configfile "$env:APPDATA/NuGet/NuGet.config"
+
+    - name: Restore dependencies
+      run: dotnet restore "LogViewer/LogViewer.csproj"
 
     - name: Restore dependencies
       run: dotnet restore "LogViewer/LogViewer.csproj" --configfile nuget.config
