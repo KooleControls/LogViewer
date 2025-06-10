@@ -1,0 +1,10 @@
+sources:
+
+ - Thermostat.yaml
+ - Manager.yaml
+ - Modbus.yaml
+ - IndoorUnit_0.yaml
+ - IndoorUnit_1.yaml
+ - IndoorUnit_2.yaml
+ - IndoorUnit_3.yaml
+ - Unknown.yaml

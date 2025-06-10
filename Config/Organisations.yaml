@@ -1,0 +1,70 @@
+organisations:
+  koole_controls:
+    name: Koole Controls
+    organisationId: 1
+    basePath: https://api.koolecontrols.nl/kc/live/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/kc
+
+  roompot:
+    name: Roompot
+    organisationId: 1
+    basePath: https://rvp.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/rvp
+
+  krim:
+    name: De Krim
+    organisationId: 1
+    basePath: https://api.koolecontrols.nl/krim/live/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/kc
+  
+  libema:
+    name: Libema
+    organisationId: 1
+    basePath: https://lib.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/lib
+
+  veerse_pot:
+    name: Veerse Pot
+    organisationId: 1
+    basePath: https://vpt.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/vpt
+
+  rcn:
+    name: RCN
+    organisationId: 1
+    basePath: https://api.koolecontrols.nl/rcn/live/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/kc
+
+  rcn_google:
+    name: RCN Google
+    organisationId: 1
+    basePath: https://rcn.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/rcn
+
+  aedes:
+    name: Aedes
+    organisationId: 1
+    basePath: https://api.koolecontrols.nl/aedesmaritima/live/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/kc
+
+  ons_buiten:
+    name: Ons Buiten
+    organisationId: 1
+    basePath: https://ons.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/ons
+
+  top_totaal:
+    name: Top Totaal
+    organisationId: 1
+    basePath: https://tpt.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/tpt

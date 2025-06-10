@@ -1,0 +1,291 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "LogViewerConfig",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "organisations": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/OrganisationConfig"
+      }
+    },
+    "profiles": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/ProfileConfig"
+      }
+    }
+  },
+  "definitions": {
+    "OrganisationConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "organisationId": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        },
+        "basePath": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "authPath": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "clientId": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "clientSecret": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "authenticationMethod": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/AuthenticationMethods"
+            }
+          ]
+        }
+      }
+    },
+    "AuthenticationMethods": {
+      "type": "string",
+      "description": "",
+      "x-enumNames": [
+        "GetOAuth2_OpenIdConnectClient",
+        "GetOAuth2_ApplicationFlowClient"
+      ],
+      "enum": [
+        "GetOAuth2_OpenIdConnectClient",
+        "GetOAuth2_ApplicationFlowClient"
+      ]
+    },
+    "ProfileConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "traces": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/TraceConfig"
+          }
+        },
+        "unhandeled": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/UnhandeledConfig"
+            }
+          ]
+        }
+      }
+    },
+    "TraceConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "unit": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "color": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "visible": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/VisibleOptions"
+            }
+          ]
+        },
+        "offset": {
+          "type": [
+            "null",
+            "number"
+          ],
+          "format": "float"
+        },
+        "scale": {
+          "type": [
+            "null",
+            "number"
+          ],
+          "format": "float"
+        },
+        "drawStyle": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/DrawStyles"
+            }
+          ]
+        },
+        "drawOption": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/DrawOptions"
+            }
+          ]
+        },
+        "stateNames": {
+          "type": [
+            "null",
+            "object"
+          ],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "includeLogs": {
+          "type": "object",
+          "x-dictionaryKey": {
+            "$ref": "#/definitions/LogKeys"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "VisibleOptions": {
+      "type": "string",
+      "description": "",
+      "x-enumNames": [
+        "Always",
+        "WhenData",
+        "Never"
+      ],
+      "enum": [
+        "Always",
+        "WhenData",
+        "Never"
+      ]
+    },
+    "DrawStyles": {
+      "type": "string",
+      "description": "",
+      "x-enumNames": [
+        "Points",
+        "Lines",
+        "NonInterpolatedLine",
+        "DiscreteSingal",
+        "State",
+        "Cross"
+      ],
+      "enum": [
+        "Points",
+        "Lines",
+        "NonInterpolatedLine",
+        "DiscreteSingal",
+        "State",
+        "Cross"
+      ]
+    },
+    "DrawOptions": {
+      "type": "string",
+      "description": " (Comma-separated flags allowed)",
+      "pattern": "^(None|ShowCrosses|ExtendBegin|ExtendEnd|ShowScale|DrawNames)(,\\s*(None|ShowCrosses|ExtendBegin|ExtendEnd|ShowScale|DrawNames))*$",
+      "x-example": "None, ShowCrosses, ExtendBegin, ExtendEnd, ShowScale, DrawNames",
+      "x-enumFlags": true,
+      "x-enumNames": [
+        "None",
+        "ShowCrosses",
+        "ExtendBegin",
+        "ExtendEnd",
+        "ShowScale",
+        "DrawNames"
+      ]
+    },
+    "LogKeys": {
+      "type": "string",
+      "description": "",
+      "x-enumNames": [
+        "TimeStamp",
+        "Measurement",
+        "SoftwareId",
+        "DeviceId",
+        "LogCode",
+        "Version",
+        "RawData"
+      ],
+      "enum": [
+        "TimeStamp",
+        "Measurement",
+        "SoftwareId",
+        "DeviceId",
+        "LogCode",
+        "Version",
+        "RawData"
+      ]
+    },
+    "UnhandeledConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "offset": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "nameKey": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

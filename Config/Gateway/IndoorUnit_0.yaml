@@ -1,0 +1,83 @@
+
+profiles:
+  gateway:
+    name: Gateway
+    traces:
+      iu_0_temp:
+        name: IU 0 Temp
+        unit: "°C"
+        color: 0xFFFFFF4D
+        drawStyle: Lines
+        visible: WhenData
+        includeLogs:
+          SoftwareId: SmarthomeGateway
+          LogCode: CMN_IndoorUnit_ActualTempChanged
+          DeviceId: 0
+
+      iu_0_setpoint: 
+        name: IU 0 Setp
+        unit: "°C"
+        color: 0xFFFF4D4D
+        drawStyle: NonInterpolatedLine
+        drawOption: ExtendEnd
+        visible: WhenData
+        includeLogs:
+          SoftwareId: SmarthomeGateway
+          LogCode: CMN_IndoorUnit_SetpointChanged
+          DeviceId: 0
+
+      iu_0_mode: 
+        name: IU 0 Mode
+        unit: ""
+        color: 0xFFFF3D3D
+        drawStyle: State
+        drawOption: ExtendEnd, DrawNames
+        visible: WhenData
+        offset: -12
+        stateNames:
+          0: Cool	      
+          1: Heat	      
+          2: Auto	      
+          3: Dry           
+          4: HAUX	      
+          5: Fan	          
+          6: HH	          
+          7: VAM_Auto	  
+          8: VAM_Bypass	  
+          9: VAM_Heat_Exch 
+          10: VAM_Normal    
+          11: Unknown		  
+          12: Off	
+        includeLogs:
+          SoftwareId: SmarthomeGateway
+          LogCode: CMN_IndoorUnit_ModeChanged
+          DeviceId: 0
+
+      iu_0_power: 
+        name: IU 0 Power
+        unit: ""
+        color: 0xFFFF3D3D
+        drawStyle: State
+        drawOption: ExtendEnd, DrawNames
+        visible: WhenData
+        offset: -13.5
+        stateNames:
+          0: Off
+          1: On
+        includeLogs:
+          SoftwareId: SmarthomeGateway
+          LogCode: CMN_IndoorUnit_OnOffChanged
+          DeviceId: 0
+
+      iu_0_fault: 
+        name: IU 0 Fault
+        unit: ""
+        color: 0xFFFF3D3D
+        drawStyle: State
+        drawOption: ExtendEnd, DrawNames
+        visible: WhenData
+        offset: -15
+        includeLogs:
+          SoftwareId: SmarthomeGateway
+          LogCode: CMN_IndoorUnit_FaultCodeChanged
+          DeviceId: 0
