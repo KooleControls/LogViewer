@@ -42,6 +42,10 @@ jobs:
         $nugetConfig = Get-Content "nuget.config"
         $updated = $nugetConfig -replace '%AZURE_ARTIFACTS_PAT%', "${{ secrets.AZURE_ARTIFACTS_PAT }}"
         Set-Content "nuget.config" $updated
+        
+    - name: Show nuget.config
+      run: Get-Content nuget.config
+
 
     - name: Restore dependencies
       run: dotnet restore "LogViewer/LogViewer.csproj" --configfile nuget.config
