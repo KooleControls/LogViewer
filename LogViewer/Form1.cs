@@ -4,11 +4,10 @@ using KCObjectsStandard.Data.Api.KC;
 using LogViewer.AppContext;
 using LogViewer.Config;
 using LogViewer.Config.Models;
+using LogViewer.Utils;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Windows.Forms;
-using static Org.BouncyCastle.Math.EC.ECCurve;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
 
@@ -86,10 +85,46 @@ namespace LogViewer
 
         private async Task CheckForUpdates()
         {
+
+            toolStripStatusLabel1.Text = "Checking for application updates";
+            Version? version = Assembly.GetExecutingAssembly().GetName().Version;
+            var checker = new GithubUpdateChecker("KooleControls", "LogViewer");
+            var latestVersion = await checker.GetLatestVersionAsync();
+            bool applicationUpdateAvailable = latestVersion > version;
+
+            if (applicationUpdateAvailable)
+            {
+                toolStripStatusLabel1.Text = $"New application version available: {latestVersion}";
+                toolStripStatusLabel1.IsLink = true;
+                toolStripStatusLabel1.Click += (sender, e) => {
+                    var url = $"https://github.com/KooleControls/LogViewer/releases";
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = url,
+                        UseShellExecute = true
+                    });
+                };
+                // When there is a new application, dont check for config updates
+                return;
+            }
+
             toolStripStatusLabel1.Text = "Checking for config updates";
-            bool updates = await configurationService.DownloadIfUpdatedAsync();
-            if (updates)
-                MessageBox.Show("New config available, restart tool to take effect");
+            bool configUpdateAvailable = await configurationService.DownloadIfUpdatedAsync();
+
+            if (configUpdateAvailable)
+            {
+                toolStripStatusLabel1.Text = "New config available, reloading...";
+                // Reload the configuration
+                var config = await configurationService.GetConfigAsync();
+                if (config != null)
+                {
+                    // Load the first profile from the updated config
+                    var profile = config.Profiles.FirstOrDefault().Value;
+                    if (profile != null)
+                        LoadProfile(config, profile);
+                }
+            }
+
 
             toolStripStatusLabel1.Text = "Up-to-date";
         }
