@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using System.Drawing.Drawing2D;
+using System.IO;
+using System.Reflection;
 
 namespace LogViewer.Config.Helpers
 {
@@ -66,16 +68,42 @@ namespace LogViewer.Config.Helpers
             }
         }
 
+        public static string NormalizePath(string path)
+        {
+            path = ReplaceWildcards(path);
+            path = path.Replace("\\", "/");
+            return path;
+        }
+
         public static bool IsRemotePath(string path)
         {
             return path.StartsWith("http://") || path.StartsWith("https://");
         }
 
-        public static string ReplaceWildcards(string url)
+        private static string ReplaceWildcards(string url)
         {
+            url = Environment.ExpandEnvironmentVariables(url);
+
             Version? version = Assembly.GetExecutingAssembly().GetName().Version;
             url = url.Replace("%APPVERSION%", $"v{version?.ToString()}");
+
+            DirectoryInfo? slnPath = TryGetSolutionDirectoryInfo();
+            url = url.Replace("%SOLUTION%", slnPath?.FullName);
+
             return url;
+        }
+
+        private static DirectoryInfo? TryGetSolutionDirectoryInfo(string currentPath = null)
+        {
+            var directory = new DirectoryInfo(
+                currentPath ?? Directory.GetCurrentDirectory());
+            while (directory != null && !directory.GetFiles("*.sln").Any())
+            {
+                directory = directory.Parent;
+            }
+            return directory;
         }
     }
 }
+
+

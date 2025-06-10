@@ -6,18 +6,33 @@ using LogViewer.Config.Resources;
 using LogViewer.Config.Schema;
 using LogViewer.Config.Hashing;
 using LogViewer.Config.Cache;
+using LogViewer.Config.Helpers;
 
 namespace LogViewer.Config
 {
     public class ConfigurationService
     {
-        private static readonly string VsCodeSettingsResource = $"{Assembly.GetExecutingAssembly().GetName().Name}.Resources.vscode.settings.json";
-        private static readonly string VsCodeSettingsFile = Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%\\LogViewer\\.vscode\\settings.json");
-        private static readonly string ConfigFileResource = $"{Assembly.GetExecutingAssembly().GetName().Name}.Resources.default_config.yaml";
-        private static readonly string ConfigFile = Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%\\LogViewer\\config.yaml");
-        private static readonly string SchemaFile = Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%\\LogViewer\\schema.json");
-        private static readonly string CacheFolder = Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%\\LogViewer\\cache");
 
+        // Embedded resources
+
+#if DEBUG
+        private static readonly string VsCodeSettingsResource = $"{Assembly.GetExecutingAssembly().GetName().Name}.Resources.vscode.settings.json";
+        private static readonly string ConfigFileResource = $"{Assembly.GetExecutingAssembly().GetName().Name}.Resources.default_config.development.yaml";
+
+        private static readonly string VsCodeSettingsFile = PathHelper.NormalizePath("%SOLUTION%\\Config\\.vscode\\settings.json");
+        private static readonly string SchemaFile =  PathHelper.NormalizePath("%SOLUTION%\\Config\\schema.json");
+        private static readonly string ConfigFile =  PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer\\debug\\config.yaml");
+        private static readonly string CacheFolder = PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer\\debug\\cache");
+
+#else
+        private static readonly string VsCodeSettingsResource = $"{Assembly.GetExecutingAssembly().GetName().Name}.Resources.vscode.settings.json";
+        private static readonly string ConfigFileResource = $"{Assembly.GetExecutingAssembly().GetName().Name}.Resources.default_config.yaml";
+
+        private static readonly string VsCodeSettingsFile =  PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer\\release\\.vscode\\settings.json");
+        private static readonly string SchemaFile =          PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer\\release\\schema.json");
+        private static readonly string ConfigFile =          PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer\\release\\config.yaml");
+        private static readonly string CacheFolder =         PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer\\release\\cache");
+#endif
 
         private readonly IResourceProvider _resourceProvider;
         private readonly ISchemaBuilder _schemaBuilder;
@@ -39,10 +54,6 @@ namespace LogViewer.Config
             EnsureDefaultConfigExists();
             EnsureSchemaExists();
             EnsureVsCodeSettingsExists();
-
-#if DEBUG
-            EnsureDebuggingSchemaExists();
-#endif
         }
 
         private static IConfigMerger BuildMerger()
@@ -101,37 +112,6 @@ namespace LogViewer.Config
             Directory.CreateDirectory(Path.GetDirectoryName(SchemaFile)!);
             File.WriteAllText(SchemaFile, newSchema);
         }
-
-        public void EnsureDebuggingSchemaExists()
-        {
-            DirectoryInfo? slnPath = TryGetSolutionDirectoryInfo();
-            if (slnPath == null)
-                return;
-
-            string schemaFile = Path.Combine(slnPath.FullName, "Config", "schema.json");
-            var newSchema = _schemaBuilder.GetSchema();
-
-            if (File.Exists(schemaFile))
-            {
-                var existingSchema = File.ReadAllText(schemaFile);
-
-                if (existingSchema == newSchema)
-                    return;
-            }
-
-            Directory.CreateDirectory(Path.GetDirectoryName(schemaFile)!);
-            File.WriteAllText(schemaFile, newSchema);
-        }
-
-        private static DirectoryInfo? TryGetSolutionDirectoryInfo(string currentPath = null)
-        {
-            var directory = new DirectoryInfo(
-                currentPath ?? Directory.GetCurrentDirectory());
-            while (directory != null && !directory.GetFiles("*.sln").Any())
-            {
-                directory = directory.Parent;
-            }
-            return directory;
-        }
     }
+
 }

@@ -22,14 +22,13 @@ namespace LogViewer.Config.Loaders
         {
             var result = new LogViewerConfig();
             var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            entryPath = PathHelper.NormalizePath(entryPath);    
             await LoadRecursiveAsync(entryPath, result, visited, token);
             return result;
         }
 
         private async Task LoadRecursiveAsync(string path, LogViewerConfig target, HashSet<string> visited, CancellationToken token)
         {
-            path = PathHelper.ReplaceWildcards(path);
-
             if (visited.Contains(path))
                 return;
 
@@ -50,15 +49,19 @@ namespace LogViewer.Config.Loaders
 
             foreach (var source in config.Sources.Where(s => !string.IsNullOrWhiteSpace(s)))
             {
-                string resolved = PathHelper.IsPathRooted(source)
-                    ? source
-                    : PathHelper.CombinePaths(basePath, source);
+                var normalizedSource = PathHelper.NormalizePath(source);
 
-                await LoadRecursiveAsync(resolved, config, visited, token);
+                string resolved = PathHelper.IsPathRooted(normalizedSource)
+                    ? normalizedSource
+                    : PathHelper.CombinePaths(basePath, normalizedSource);
+
+                var normalizedResolved = PathHelper.NormalizePath(resolved);
+
+                await LoadRecursiveAsync(normalizedResolved, config, visited, token);
             }
 
             _merger.TryMerge(target, config);
         }
     }
-
 }
+

@@ -8,7 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Configurations>Debug;Release;Demo</Configurations>
 	  <NuGetInteractive>true</NuGetInteractive>
-	  <Version>3.5.4.0</Version>
+	  <Version>3.5.5.0</Version>
   </PropertyGroup>
 	
   <Target Name="SetAssemblyVersion" BeforeTargets="BeforeCompile">
@@ -35,6 +35,7 @@
   </ItemGroup>
 	
   <ItemGroup>
+    <EmbeddedResource Include="Resources\default_config.development.yaml" />
     <EmbeddedResource Include="Resources\default_config.yaml" />
     <EmbeddedResource Include="Resources\vscode.settings.json" />
   </ItemGroup>

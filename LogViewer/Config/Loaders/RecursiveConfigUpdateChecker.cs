@@ -2,6 +2,7 @@
 using LogViewer.Config.Helpers;
 using LogViewer.Config.Models;
 using LogViewer.Serializers.Yaml;
+using System.Diagnostics;
 using System.IO;
 
 namespace LogViewer.Config.Loaders
@@ -18,42 +19,46 @@ namespace LogViewer.Config.Loaders
         public async Task<bool> DownloadIfUpdatedRecursiveAsync(string entryPath, CancellationToken token = default)
         {
             var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            entryPath = PathHelper.NormalizePath(entryPath);
             return await CheckRecursiveAsync(entryPath, visited, token);
         }
 
-        private async Task<bool> CheckRecursiveAsync(string path, HashSet<string> visited, CancellationToken token)
+        private async Task<bool> CheckRecursiveAsync(string orig, HashSet<string> visited, CancellationToken token)
         {
             bool updated = false;
 
-            var file = PathHelper.ReplaceWildcards(path);
+            string path = orig;
 
-            if (visited.Contains(file))
+            if (visited.Contains(path))
                 return false;
 
-            if (!visited.Add(file))
+            if (!visited.Add(path))
                 return false;
 
-            if (PathHelper.IsRemotePath(file))
+            if (PathHelper.IsRemotePath(path))
             {
-                updated = await _cacheManager.DownloadIfUpdatedAsync(file, token);
-                file = _cacheManager.GetCacheFilePath(file);
+                updated = await _cacheManager.DownloadIfUpdatedAsync(path, token);
+                path = _cacheManager.GetCacheFilePath(path);
             }
             
-            if (!File.Exists(file))
+            if (!File.Exists(path))
                 return updated;
 
-            if (!YamlSerializer.LoadYaml(new FileInfo(file), out LogViewerConfig config))
+            if (!YamlSerializer.LoadYaml(new FileInfo(path), out LogViewerConfig config))
                 return updated;
 
-            string basePath = PathHelper.GetBasePath(path);
+            string basePath = PathHelper.GetBasePath(orig);
 
             foreach (var source in config.Sources.Where(s => !string.IsNullOrWhiteSpace(s)))
             {
-                string resolved = PathHelper.IsPathRooted(source)
-                    ? source
-                    : PathHelper.CombinePaths(basePath, source);
+                var normalizedSource = PathHelper.NormalizePath(source);
 
-                updated |= await CheckRecursiveAsync(resolved, visited, token);
+                string resolved = PathHelper.IsPathRooted(normalizedSource)
+                    ? normalizedSource
+                    : PathHelper.CombinePaths(basePath, normalizedSource);
+
+                var normalizedResolved = PathHelper.NormalizePath(resolved);
+                updated |= await CheckRecursiveAsync(normalizedResolved, visited, token);
             }
 
             return updated;
