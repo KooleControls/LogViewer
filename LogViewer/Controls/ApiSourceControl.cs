@@ -119,7 +119,9 @@ namespace LogViewer.Controls
             try
             {
                 createClientCancellationTokenSource = new CancellationTokenSource();
+                DisableControls();
                 var result = await client.AuthApi.CheckSession(createClientCancellationTokenSource.Token);
+                
 
                 if (!result)
                 {
@@ -131,6 +133,10 @@ namespace LogViewer.Controls
             {
                 MessageBox.Show($"Authentication error: {ex.Message}");
                 return null;
+            }
+            finally
+            {
+                EnableControls();
             }
 
 
