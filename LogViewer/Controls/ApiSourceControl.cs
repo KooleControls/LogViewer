@@ -12,6 +12,7 @@ using LogViewer.Controls.Helpers;
 using LogViewer.Logging;
 using LogViewer.Providers.API;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace LogViewer.Controls
 {
@@ -28,7 +29,7 @@ namespace LogViewer.Controls
         private readonly ProgressBarManager progressBarManager;
         private readonly LogFetcher fetchManager;
         private InternalApiClient? apiClient;
-
+        CancellationTokenSource? createClientCancellationTokenSource;
 
         public ApiSourceControl()
         {
@@ -82,7 +83,9 @@ namespace LogViewer.Controls
             if (organisation?.BasePath == null)
                 return;
 
-            apiClient = CreateClient(organisation);
+
+            apiClient = await CreateClient(organisation);
+
             if(apiClient == null) 
                 return;
 
@@ -100,14 +103,43 @@ namespace LogViewer.Controls
             
         }
 
-        private InternalApiClient? CreateClient(OrganisationConfig organisation)
+        private async Task<InternalApiClient?> CreateClient(OrganisationConfig organisation)
         {
-            return organisation.AuthenticationMethod switch
+            var client = organisation.AuthenticationMethod switch
             {
                 AuthenticationMethods.GetOAuth2_OpenIdConnectClient => InternalApiClient.GetOAuth2OpenIdConnectClient(organisation.BasePath, organisation.AuthPath, organisation.ClientId),
-                AuthenticationMethods.GetOAuth2_ApplicationFlowClient => InternalApiClient.GetOAuth2ApplicationFlowClient(organisation.BasePath, organisation.ClientId, organisation.ClientSecret),
+                AuthenticationMethods.GetOAuth2_ApplicationFlowClient => InternalApiClient.GetOAuth2ApplicationFlowClient(organisation.BasePath, organisation.ClientId, GetClientSecret(organisation)),
                 _ => null,
             };
+
+            if (client == null)
+                return null;
+
+
+            try
+            {
+                createClientCancellationTokenSource = new CancellationTokenSource();
+                var result = await client.AuthApi.CheckSession(createClientCancellationTokenSource.Token);
+
+                if (!result)
+                {
+                    MessageBox.Show($"Authentication error");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Authentication error: {ex.Message}");
+                return null;
+            }
+
+
+            return client;
+        }
+
+        private string GetClientSecret(OrganisationConfig organisation)
+        {
+            return ShowPasswordPrompt($"Enter the apiclient password for {organisation.Name}:", "Login");
         }
 
         private async void ResortsManager_SelectedItemChanged(object? sender, Resort resort)
@@ -194,6 +226,7 @@ namespace LogViewer.Controls
             objectItemsManager.Cancel();
             gatewaysManager.Cancel();
             fetchManager.Cancel();
+            createClientCancellationTokenSource?.Cancel();
         }
 
         private void DisableControls()
@@ -230,6 +263,33 @@ namespace LogViewer.Controls
             comboBoxOrganisations.Enabled = true;
             buttonSearch.Enabled = true;
             buttonCancel.Enabled = false;
+        }
+
+        public static string ShowPasswordPrompt(string prompt, string title)
+        {
+            Form promptForm = new Form()
+            {
+                Width = 300,
+                Height = 150,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                Text = title,
+                StartPosition = FormStartPosition.CenterScreen,
+                MinimizeBox = false,
+                MaximizeBox = false
+            };
+
+            Label textLabel = new Label() { Left = 10, Top = 10, Text = prompt, AutoSize = true };
+            TextBox inputBox = new TextBox() { Left = 10, Top = 35, Width = 260, UseSystemPasswordChar = true };
+            Button confirmation = new Button() { Text = "OK", Left = 200, Width = 70, Top = 70, DialogResult = DialogResult.OK };
+
+            confirmation.Click += (sender, e) => { promptForm.Close(); };
+
+            promptForm.Controls.Add(textLabel);
+            promptForm.Controls.Add(inputBox);
+            promptForm.Controls.Add(confirmation);
+            promptForm.AcceptButton = confirmation;
+
+            return promptForm.ShowDialog() == DialogResult.OK ? inputBox.Text : null;
         }
     }
 }

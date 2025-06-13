@@ -3,7 +3,7 @@ organisations:
     name: Koole Controls
     organisationId: 1
     basePath: https://api.koolecontrols.nl/kc/live/api
-    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authenticationMethod: GetOAuth2_ApplicationFlowClient
     authPath: https://accounts.kcsmart.net/realms/kc
 
   roompot:
@@ -17,7 +17,7 @@ organisations:
     name: De Krim
     organisationId: 1
     basePath: https://api.koolecontrols.nl/krim/live/api
-    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authenticationMethod: GetOAuth2_ApplicationFlowClient
     authPath: https://accounts.kcsmart.net/realms/kc
   
   libema:
@@ -38,7 +38,7 @@ organisations:
     name: RCN
     organisationId: 1
     basePath: https://api.koolecontrols.nl/rcn/live/api
-    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authenticationMethod: GetOAuth2_ApplicationFlowClient
     authPath: https://accounts.kcsmart.net/realms/kc
 
   rcn_google:
@@ -52,7 +52,7 @@ organisations:
     name: Aedes
     organisationId: 1
     basePath: https://api.koolecontrols.nl/aedesmaritima/live/api
-    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authenticationMethod: GetOAuth2_ApplicationFlowClient
     authPath: https://accounts.kcsmart.net/realms/kc
 
   ons_buiten:
