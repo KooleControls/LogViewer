@@ -13,7 +13,6 @@ namespace LogViewer.Config.Models
         public string? BasePath { get; set; }
         public string? AuthPath { get; set; }
         public string? ClientId { get; set; } = "SmartHomeAnalyzer";
-        public string? ClientSecret { get; set; }
 
         public AuthenticationMethods? AuthenticationMethod { get; set; }
         public override string ToString() => Name ?? "No name";
