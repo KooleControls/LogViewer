@@ -42,6 +42,7 @@
             comboBoxOrganisations = new ComboBox();
             buttonCancel = new Button();
             buttonSearch = new Button();
+            checkBoxRequireGateways = new CheckBox();
             SuspendLayout();
             // 
             // richTextBoxInfoView
@@ -113,9 +114,9 @@
             listBoxObjectItems.FormattingEnabled = true;
             listBoxObjectItems.IntegralHeight = false;
             listBoxObjectItems.ItemHeight = 15;
-            listBoxObjectItems.Location = new Point(3, 90);
+            listBoxObjectItems.Location = new Point(3, 120);
             listBoxObjectItems.Name = "listBoxObjectItems";
-            listBoxObjectItems.Size = new Size(230, 170);
+            listBoxObjectItems.Size = new Size(230, 140);
             listBoxObjectItems.TabIndex = 21;
             // 
             // textBoxSearch
@@ -182,10 +183,22 @@
             buttonSearch.Text = "Search";
             buttonSearch.UseVisualStyleBackColor = true;
             // 
+            // checkBoxRequireGateways
+            // 
+            checkBoxRequireGateways.Checked = true;
+            checkBoxRequireGateways.CheckState = CheckState.Checked;
+            checkBoxRequireGateways.Location = new Point(4, 90);
+            checkBoxRequireGateways.Name = "checkBoxRequireGateways";
+            checkBoxRequireGateways.Size = new Size(229, 24);
+            checkBoxRequireGateways.TabIndex = 30;
+            checkBoxRequireGateways.Text = "Hide objects without gateways";
+            checkBoxRequireGateways.UseVisualStyleBackColor = true;
+            // 
             // ApiSourceControl
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(checkBoxRequireGateways);
             Controls.Add(buttonSearch);
             Controls.Add(buttonCancel);
             Controls.Add(richTextBoxInfoView);
@@ -222,5 +235,6 @@
         private ComboBox comboBoxOrganisations;
         private Button buttonCancel;
         private Button buttonSearch;
+        private CheckBox checkBoxRequireGateways;
     }
 }

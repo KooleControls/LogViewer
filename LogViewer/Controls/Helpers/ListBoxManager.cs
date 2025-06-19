@@ -1,5 +1,6 @@
 ﻿using KCObjectsStandard.Device.KC.Gateway;
 using LogViewer.Providers.API;
+using System.Threading;
 
 namespace LogViewer.Controls.Helpers
 {
@@ -7,7 +8,6 @@ namespace LogViewer.Controls.Helpers
     {
         public event EventHandler<T>? SelectedItemChanged;
         private readonly ListBox listBox;
-        private CancellationTokenSource? cancellationTokenSource;
 
         public ListBoxManager(ListBox listBox)
         {
@@ -16,32 +16,19 @@ namespace LogViewer.Controls.Helpers
         }
         public IProgress<double>? Progress { get; set; }
         public string DisplayMember { get => listBox.DisplayMember; set => listBox.DisplayMember = value; }
-        public void Cancel() => cancellationTokenSource?.Cancel();
 
-        public async Task Load(IApiDataProvider<T> dataProvider)
+        public async Task Load(IApiDataProvider<T> dataProvider, CancellationToken token)
         {
-            try
+            var newItems = dataProvider.GetData(token, Progress);
+            ClearItems();
+            await foreach (var item in newItems)
             {
-                cancellationTokenSource = new CancellationTokenSource();
-                var cancellationToken = cancellationTokenSource.Token;
-                var newItems = dataProvider.GetData(cancellationToken, Progress);
-                ClearItems();
-                await foreach (var item in newItems)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    if(item != null)
-                        AddItem(item);
-                }
+                token.ThrowIfCancellationRequested();
+                if (item != null)
+                    AddItem(item);
             }
-            //catch (Exception exception)
-            //{
-            //}
-            finally
-            {
-                cancellationTokenSource?.Dispose();
-                cancellationTokenSource = null;
-                Progress?.Report(0);
-            }
+            Progress?.Report(0);
+
         }
         private void OnSelectedItemChanged()
         {

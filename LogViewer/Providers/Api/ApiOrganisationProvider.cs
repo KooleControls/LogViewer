@@ -1,4 +1,6 @@
-﻿using LogViewer.Config;
+﻿using KC.InternalApi.Model;
+using KC.InternalApiClient;
+using LogViewer.Config;
 using LogViewer.Config.Models;
 using System.Runtime.CompilerServices;
 

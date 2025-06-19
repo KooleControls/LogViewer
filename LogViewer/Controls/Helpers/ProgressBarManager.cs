@@ -16,5 +16,10 @@
             if (e >= 0 && e <= 1)
                 progressBar.Value = (int)(e * 100);
         }
+
+        public void Reset()
+        {
+            progressBar.Value = 0;
+        }
     }
 }

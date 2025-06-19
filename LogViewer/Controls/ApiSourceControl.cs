@@ -1,18 +1,9 @@
-﻿using DevExpress.Data.TreeList;
-using DevExpress.Entity.Model.Metadata;
-using FormsLib.Controls;
-using FormsLib.Extentions;
-using KC.InternalApi.Api;
-using KC.InternalApi.Client;
-using KC.InternalApi.Model;
+﻿using KC.InternalApi.Model;
 using KC.InternalApiClient;
 using LogViewer.AppContext;
 using LogViewer.Config.Models;
 using LogViewer.Controls.Helpers;
-using LogViewer.Logging;
 using LogViewer.Providers.API;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 namespace LogViewer.Controls
 {
@@ -29,180 +20,170 @@ namespace LogViewer.Controls
         private readonly ProgressBarManager progressBarManager;
         private readonly LogFetcher fetchManager;
         private InternalApiClient? apiClient;
-        CancellationTokenSource? createClientCancellationTokenSource;
+        private readonly ControlStateManager controlStateManager;
+        private readonly ApiClientProvider apiClientProvider;
+
+        CancellationTokenSource? cancellationTokenSource;
 
         public ApiSourceControl()
         {
             InitializeComponent();
 
+            controlStateManager = new ControlStateManager([
+                richTextBoxInfoView,
+                buttonFetch,
+                label2,
+                label1,
+                dateTimePickerUntill,
+                dateTimePickerFrom,
+                listBoxObjectItems,
+                textBoxSearch,
+                progressBar1,
+                comboBoxGateways,
+                comboBoxResorts,
+                comboBoxOrganisations,
+                buttonSearch,
+            ]);
+
+
             progressBarManager = new ProgressBarManager(progressBar1);
 
-            organisationsManager = new (comboBoxOrganisations);
+            organisationsManager = new(comboBoxOrganisations);
             organisationsManager.DisplayMember = nameof(OrganisationConfig.Name);
             organisationsManager.Progress = progressBarManager.Progress;
-            organisationsManager.SelectedItemChanged += OrganisationsManager_SelectedItemChanged;
+            organisationsManager.SelectedItemChanged += (s, organisation) => LoadResortsForOrganisation(organisation);
 
-            resortsManager = new (comboBoxResorts);
+            resortsManager = new(comboBoxResorts);
             resortsManager.DisplayMember = nameof(Resort.Name);
             resortsManager.Progress = progressBarManager.Progress;
-            resortsManager.SelectedItemChanged += ResortsManager_SelectedItemChanged;
+            resortsManager.SelectedItemChanged += (s, resort) =>
+            {
+                textBoxSearch.Text = "";
+                LoadObjectItemsForResort(resortsManager.SelectedItem, null);
+            };
 
-            objectItemsManager = new (listBoxObjectItems);
+            objectItemsManager = new(listBoxObjectItems);
             objectItemsManager.DisplayMember = nameof(ObjectItem.Name);
             objectItemsManager.Progress = progressBarManager.Progress;
-            objectItemsManager.SelectedItemChanged += ObjectItemsManager_SelectedItemChanged;
+            objectItemsManager.SelectedItemChanged += (s, objectItem) => LoadGatewaysForObjectItem(objectItem);
 
-            gatewaysManager = new (comboBoxGateways);
+            gatewaysManager = new(comboBoxGateways);
             gatewaysManager.DisplayMember = nameof(Gateway.Name);
             gatewaysManager.Progress = progressBarManager.Progress;
-            gatewaysManager.SelectedItemChanged += GatewaysManager_SelectedItemChanged;
+            gatewaysManager.SelectedItemChanged += (s, gateway) => UpdateInfoForGateway(gateway);
 
             infoViewManager = new InfoViewManager(richTextBoxInfoView);
 
             fetchManager = new LogFetcher();
             fetchManager.Progress = progressBarManager.Progress;
 
-            buttonCancel.Click += ButtonCancel_Click;
-            buttonSearch.Click += ButtonSearch_Click;
+            buttonCancel.Click += (s, e) => cancellationTokenSource?.Cancel();
+            buttonSearch.Click += (s, e) => LoadObjectItemsForResort(resortsManager.SelectedItem, textBoxSearch.Text);
             buttonFetch.Click += ButtonFetch_Click;
+
+            checkBoxRequireGateways.CheckedChanged += (s, e) => LoadObjectItemsForResort(resortsManager.SelectedItem, textBoxSearch.Text);
 
             dateTimePickerFrom.Value = DateTime.Now.Date;
             dateTimePickerUntill.Value = DateTime.Now.Date + TimeSpan.FromDays(1);
+
+            apiClientProvider = new ApiClientProvider();
+            apiClientProvider.SetPasswordProvider(DialogHelper.ShowPasswordPrompt);
         }
+
 
         public async Task LoadOrganisations(List<OrganisationConfig> organisationConfigs)
         {
-            DisableControls();
-            await organisationsManager.Load(new ApiOrganisationProvider(organisationConfigs));
-            EnableControls();
-        }
-
-
-        private async void OrganisationsManager_SelectedItemChanged(object? sender, OrganisationConfig organisation)
-        {
-            if (organisation?.BasePath == null)
-                return;
-
-
-            apiClient = await CreateClient(organisation);
-
-            if(apiClient == null) 
-                return;
-
-            apiClient.AuthApi.SessionRenewed += AuthApi_SessionRenewed;
-
-            infoViewManager.ApiUrl = organisation.BasePath?.ToString() ?? "";
-            DisableControls();
-            if (apiClient != null)
-                await resortsManager.Load(new ApiResortProvider(apiClient, organisation.OrganisationId ?? throw new Exception()));
-            EnableControls();
-        }
-
-        private void AuthApi_SessionRenewed(object? sender, EventArgs e)
-        {
-            
-        }
-
-        private async Task<InternalApiClient?> CreateClient(OrganisationConfig organisation)
-        {
-            var client = organisation.AuthenticationMethod switch
+            await RunWithDisabledControlsAsync(async token =>
             {
-                AuthenticationMethods.GetOAuth2_OpenIdConnectClient => InternalApiClient.GetOAuth2OpenIdConnectClient(organisation.BasePath, organisation.AuthPath, organisation.ClientId),
-                AuthenticationMethods.GetOAuth2_ApplicationFlowClient => InternalApiClient.GetOAuth2ApplicationFlowClient(organisation.BasePath, organisation.ClientId, GetClientSecret(organisation)),
-                _ => null,
-            };
-
-            if (client == null)
-                return null;
-
-
-            try
-            {
-                createClientCancellationTokenSource = new CancellationTokenSource();
-                DisableControls();
-                var result = await client.AuthApi.CheckSession(createClientCancellationTokenSource.Token);
-                
-
-                if (!result)
-                {
-                    MessageBox.Show($"Authentication error");
-                    return null;
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Authentication error: {ex.Message}");
-                return null;
-            }
-            finally
-            {
-                EnableControls();
-            }
-
-
-            return client;
+                await organisationsManager.Load(new ApiOrganisationProvider(organisationConfigs), token);
+            });
         }
 
-        private string GetClientSecret(OrganisationConfig organisation)
+
+        private async void LoadResortsForOrganisation(OrganisationConfig organisation)
         {
-            return ShowPasswordPrompt($"Enter the apiclient password for {organisation.Name}:", "Login");
+            if (organisation?.BasePath == null || organisation.OrganisationId == null)
+                return;
+
+            await RunWithDisabledControlsAsync(async token =>
+            {
+                apiClient = await apiClientProvider.CreateAuthenticatedClientAsync(organisation, token);
+                if (apiClient == null)
+                    return;
+
+                infoViewManager.ApiUrl = organisation.BasePath.ToString();
+
+                var provider = new ApiResortProviderBuilder(apiClient)
+                    .ForOrganisation(organisation.OrganisationId.Value)
+                    .WithSortByName()
+                    .Build();
+
+                await resortsManager.Load(provider, token);
+            });
         }
 
-        private async void ResortsManager_SelectedItemChanged(object? sender, Resort resort)
+        private async void LoadObjectItemsForResort(Resort resort, string? searchField)
         {
-            if (apiClient == null)
-                return;
-            if (resort?.Id == null)
+            if (apiClient == null || resort?.Id == null)
                 return;
 
-            infoViewManager.IST = resort?.Settings?.InstallCode ?? "";
-            infoViewManager.Host = resort?.Settings?.ConnectionServerSettings?.ServerAddress ?? "";
-            infoViewManager.COM = resort?.Settings?.ConnectionServerSettings?.ComPort?.ToString() ?? "";
-            infoViewManager.TRG = resort?.Settings?.ConnectionServerSettings?.TrgPort?.ToString() ?? "";
+            UpdateInfoForResort(resort.Settings);
 
-            DisableControls();
-            textBoxSearch.Text = "";
-            if(resort?.Id != null)
-                await objectItemsManager.Load(new ApiObjectItemProvider(apiClient, resort.Id.Value));
-            EnableControls();
+            await RunWithDisabledControlsAsync(async token =>
+            {
+                var builder = new ObjectItemProviderBuilder(apiClient)
+                .ForResort(resort.Id.Value)
+                .WithSortByName();
+
+                if (checkBoxRequireGateways.Checked)
+                    builder.WithRequireGateway();
+
+                if (!string.IsNullOrWhiteSpace(searchField))
+                    builder.WhereName(searchField);
+
+
+                var provider = builder.Build();
+                await objectItemsManager.Load(provider, token);
+            });
         }
 
-        private async void ButtonSearch_Click(object? sender, EventArgs e)
+        private void UpdateInfoForResort(ResortSettings? settings)
         {
-            var resort = resortsManager.SelectedItem;
-            if (apiClient == null)
-                return;
-            if (resort?.Id == null)
-                return;
-            DisableControls();
-            await objectItemsManager.Load(new ApiObjectItemProvider(apiClient, resort.Id.Value));
-            EnableControls();
+            infoViewManager.IST = settings?.InstallCode ?? "";
+            infoViewManager.Host = settings?.ConnectionServerSettings?.ServerAddress ?? "";
+            infoViewManager.COM = settings?.ConnectionServerSettings?.ComPort?.ToString() ?? "";
+            infoViewManager.TRG = settings?.ConnectionServerSettings?.TrgPort?.ToString() ?? "";
         }
 
-        private async void ObjectItemsManager_SelectedItemChanged(object? sender, ObjectItem objectItem)
+
+        private async void LoadGatewaysForObjectItem(ObjectItem objectItem)
         {
             if (apiClient == null)
                 return;
             if (objectItem.Id == null)
                 return;
-            DisableControls();
-            await gatewaysManager.Load(new ApiGatewayProvider(apiClient, objectItem.Id.Value));
-            gatewaysManager.SelectIndex(0);
-            EnableControls();
+            await RunWithDisabledControlsAsync(async token =>
+            {
+                var provider = new ApiGatewayProviderBuilder(apiClient)
+                    .ForObjectItem(objectItem.Id.Value)
+                    .WithSortByName()
+                    .Build();
+
+                await gatewaysManager.Load(provider, token);
+                gatewaysManager.SelectIndex(0);
+            });
         }
 
-        private void GatewaysManager_SelectedItemChanged(object? sender, Gateway gateway)
+        private void UpdateInfoForGateway(Gateway gateway)
         {
-
             if (apiClient == null)
                 return;
             if (gateway.Id == null)
                 return;
-            DisableControls();
+
             infoViewManager.SID = gateway.Sid?.ToString() ?? "";
             infoViewManager.DEVID = gateway.GatewayId?.ToString() ?? "";
-            EnableControls();
-            
+
         }
 
         private async void ButtonFetch_Click(object? sender, EventArgs e)
@@ -212,90 +193,44 @@ namespace LogViewer.Controls
                 return;
             if (gateway?.Id == null)
                 return;
-            DisableControls();
-            var logProvider = new ApiGatewayLogProvider(apiClient, gateway.Id.Value, dateTimePickerFrom.Value, dateTimePickerUntill.Value);
-            string name = $"{organisationsManager.SelectedItem.Name} - {resortsManager.SelectedItem.Name} - {gatewaysManager.SelectedItem.Name}";
 
-            DataSource.ScopeViewContext.StartDate = dateTimePickerFrom.Value;
-            DataSource.ScopeViewContext.EndDate = dateTimePickerUntill.Value;
-
-            DataSource.LogCollection = await fetchManager.Load(logProvider);
-            OnDataChanged?.Invoke(this, EventArgs.Empty);
-            EnableControls();
-        }
-
-
-        private void ButtonCancel_Click(object? sender, EventArgs e)
-        {
-            organisationsManager.Cancel();
-            resortsManager.Cancel();
-            objectItemsManager.Cancel();
-            gatewaysManager.Cancel();
-            fetchManager.Cancel();
-            createClientCancellationTokenSource?.Cancel();
-        }
-
-        private void DisableControls()
-        {
-            richTextBoxInfoView.Enabled = false;
-            buttonFetch.Enabled = false;
-            label2.Enabled = false;
-            label1.Enabled = false;
-            dateTimePickerUntill.Enabled = false;
-            dateTimePickerFrom.Enabled = false;
-            listBoxObjectItems.Enabled = false;
-            textBoxSearch.Enabled = false;
-            progressBar1.Enabled = false;
-            comboBoxGateways.Enabled = false;
-            comboBoxResorts.Enabled = false;
-            comboBoxOrganisations.Enabled = false;
-            buttonSearch.Enabled = false;
-            buttonCancel.Enabled = true;
-        }
-
-        private void EnableControls()
-        {
-            richTextBoxInfoView.Enabled = true;
-            buttonFetch.Enabled = true;
-            label2.Enabled = true;
-            label1.Enabled = true;
-            dateTimePickerUntill.Enabled = true;
-            dateTimePickerFrom.Enabled = true;
-            listBoxObjectItems.Enabled = true;
-            textBoxSearch.Enabled = true;
-            progressBar1.Enabled = true;
-            comboBoxGateways.Enabled = true;
-            comboBoxResorts.Enabled = true;
-            comboBoxOrganisations.Enabled = true;
-            buttonSearch.Enabled = true;
-            buttonCancel.Enabled = false;
-        }
-
-        public static string ShowPasswordPrompt(string prompt, string title)
-        {
-            Form promptForm = new Form()
+            await RunWithDisabledControlsAsync(async token =>
             {
-                Width = 300,
-                Height = 150,
-                FormBorderStyle = FormBorderStyle.FixedDialog,
-                Text = title,
-                StartPosition = FormStartPosition.CenterScreen,
-                MinimizeBox = false,
-                MaximizeBox = false
-            };
+                var logProvider = new ApiGatewayLogProvider(apiClient, gateway.Id.Value, dateTimePickerFrom.Value, dateTimePickerUntill.Value);
+                string name = $"{organisationsManager.SelectedItem.Name} - {resortsManager.SelectedItem.Name} - {gatewaysManager.SelectedItem.Name}";
 
-            Label textLabel = new Label() { Left = 10, Top = 10, Text = prompt, AutoSize = true };
-            TextBox inputBox = new TextBox() { Left = 10, Top = 35, Width = 260, UseSystemPasswordChar = true };
-            Button confirmation = new Button() { Text = "OK", Left = 200, Width = 70, Top = 70, DialogResult = DialogResult.OK };
+                DataSource.ScopeViewContext.StartDate = dateTimePickerFrom.Value;
+                DataSource.ScopeViewContext.EndDate = dateTimePickerUntill.Value;
 
-            confirmation.Click += (sender, e) => { promptForm.Close(); };
+                DataSource.LogCollection = await fetchManager.Load(logProvider, token);
+                OnDataChanged?.Invoke(this, EventArgs.Empty);
+            });
+        }
 
-            promptForm.Controls.Add(textLabel);
-            promptForm.Controls.Add(inputBox);
-            promptForm.Controls.Add(confirmation);
-            promptForm.AcceptButton = confirmation;
 
-            return promptForm.ShowDialog() == DialogResult.OK ? inputBox.Text : null;
+        private async Task RunWithDisabledControlsAsync(Func<CancellationToken, Task> task)
+        {
+            cancellationTokenSource?.Dispose();
+            cancellationTokenSource = new CancellationTokenSource();
+            controlStateManager.DisableAll();
+            try
+            {
+                await task(cancellationTokenSource.Token);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred:\r\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                progressBarManager.Reset();
+                controlStateManager.EnableAll();
+                cancellationTokenSource.Dispose();
+                cancellationTokenSource = null;
+            }
         }
     }
 }

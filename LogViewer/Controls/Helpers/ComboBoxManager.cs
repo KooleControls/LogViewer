@@ -10,7 +10,6 @@ namespace LogViewer.Controls.Helpers
     {
         public event EventHandler<T>? SelectedItemChanged;
         private readonly ComboBox comboBox;
-        private CancellationTokenSource? cancellationTokenSource;
 
         public ComboBoxManager(ComboBox comboBox)
         {
@@ -25,35 +24,19 @@ namespace LogViewer.Controls.Helpers
             set => comboBox.DisplayMember = value;
         }
 
-        public void Cancel() => cancellationTokenSource?.Cancel();
-
         public T SelectedItem => (T)comboBox.SelectedItem;
 
-        public async Task Load(IApiDataProvider<T> dataProvider)
+        public async Task Load(IApiDataProvider<T> dataProvider, CancellationToken token)
         {
-            try
+            ClearItems();
+            var newItems = dataProvider.GetData(token, Progress);
+            await foreach (var item in newItems)
             {
-                ClearItems();
-                cancellationTokenSource = new CancellationTokenSource();
-                var cancellationToken = cancellationTokenSource.Token;
-                var newItems = dataProvider.GetData(cancellationToken, Progress);
-                await foreach (var item in newItems)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    if (item != null)
-                        AddItem(item);
-                }
+                token.ThrowIfCancellationRequested();
+                if (item != null)
+                    AddItem(item);
             }
-            //catch (Exception exception)
-            //{
-            //    // Handle exceptions as needed
-            //}
-            finally
-            {
-                cancellationTokenSource?.Dispose();
-                cancellationTokenSource = null;
-                Progress?.Report(0);
-            }
+            Progress?.Report(0);
         }
 
         public int Count => comboBox.Items.Count;

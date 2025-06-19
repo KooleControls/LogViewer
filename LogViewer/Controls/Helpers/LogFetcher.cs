@@ -1,33 +1,25 @@
 ﻿using LogViewer.Logging;
 using LogViewer.Providers.API;
+using System.Threading;
+using System;
+using YamlDotNet.Core.Tokens;
+using System.Diagnostics;
 
 namespace LogViewer.Controls.Helpers
 {
     public class LogFetcher
     {
-        private CancellationTokenSource? cancellationTokenSource;
-
         public LogFetcher()
         {
         }
 
         public IProgress<double>? Progress { get; set; }
-        public void Cancel() => cancellationTokenSource?.Cancel();
 
-        public async Task<LogCollection> Load(ApiGatewayLogProvider provider)
+        public async Task<LogCollection> Load(ApiGatewayLogProvider provider, CancellationToken token)
         {
-            try
-            {
-                cancellationTokenSource = new CancellationTokenSource();
-                var cancellationToken = cancellationTokenSource.Token;
-                return await provider.GetData(cancellationTokenSource.Token, Progress);
-            }
-            finally
-            {
-                cancellationTokenSource?.Dispose();
-                cancellationTokenSource = null;
-                Progress?.Report(0);
-            }
+            var data = await provider.GetData(token, Progress);
+            Progress?.Report(0);
+            return data;
         }
     }
 }
