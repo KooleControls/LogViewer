@@ -22,9 +22,8 @@ namespace LogViewer
         private readonly ScopeController scopeController;
         private readonly LogScopeMapper scopeMapper;
         private readonly ConfigurationService configurationService;
-        private readonly HybridCache hybridCache;
 
-        public Form1(HybridCache hybridCache)
+        public Form1()
         {
             InitializeComponent();
 
@@ -53,7 +52,6 @@ namespace LogViewer
 
             // Load configuration settings
             this.Load += Form1_Load;
-            this.hybridCache = hybridCache;
 
 #if RELEASE
             this.Size = new Size(1280, 720);

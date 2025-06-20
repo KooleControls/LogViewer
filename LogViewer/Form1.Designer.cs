@@ -44,7 +44,7 @@ namespace LogViewer
             markerView1 = new FormsLib.Scope.Controls.CursorsView();
             tabControl1 = new TabControl();
             tabPageApi = new TabPage();
-            apiSourceControl1 = new Controls.ApiSourceControl(hybridCache);
+            apiSourceControl1 = new Controls.ApiSourceControl();
             tabPageTraces = new TabPage();
             traceView1 = new FormsLib.Scope.Controls.TraceView();
             statusStrip1 = new StatusStrip();

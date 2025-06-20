@@ -23,15 +23,13 @@ namespace LogViewer.Controls
         private InternalApiClient? apiClient;
         private readonly ControlStateManager controlStateManager;
         private readonly ApiClientProvider apiClientProvider;
-        private readonly HybridCache hybridCache;
+
 
         CancellationTokenSource? cancellationTokenSource;
 
-        public ApiSourceControl(HybridCache hybridCache)
+        public ApiSourceControl()
         {
             InitializeComponent();
-
-            this.hybridCache = hybridCache;
 
             controlStateManager = new ControlStateManager([
                 richTextBoxInfoView,
@@ -90,7 +88,7 @@ namespace LogViewer.Controls
             dateTimePickerFrom.Value = DateTime.Now.Date;
             dateTimePickerUntill.Value = DateTime.Now.Date + TimeSpan.FromDays(1);
 
-            apiClientProvider = new ApiClientProvider(hybridCache);
+            apiClientProvider = new ApiClientProvider();
             apiClientProvider.SetPasswordProvider(DialogHelper.ShowPasswordPrompt);
         }
 

@@ -1,6 +1,7 @@
 ﻿using KC.InternalApiClient;
 using LogViewer.Config.Models;
 using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LogViewer.Controls.Helpers
 {
@@ -9,10 +10,11 @@ namespace LogViewer.Controls.Helpers
         private Func<string, string, string?> passwordProvider;
         private readonly HybridCache hybridCache;
 
-        public ApiClientProvider(HybridCache hybridCache)
+        public ApiClientProvider()
         {
             passwordProvider = (prompt, title) => "";
-            this.hybridCache = hybridCache;
+            hybridCache = Program.ServiceProvider.GetRequiredService<HybridCache>();
+
         }
 
         public void SetPasswordProvider(Func<string, string, string?> provider)
