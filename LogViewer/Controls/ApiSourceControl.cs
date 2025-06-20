@@ -131,7 +131,7 @@ namespace LogViewer.Controls
 
             await RunWithDisabledControlsAsync(async token =>
             {
-                var builder = new ObjectItemProviderBuilder(apiClient)
+                var builder = new ApiObjectItemProviderBuilder(apiClient)
                 .ForResort(resort.Id.Value)
                 .WithSortByName();
 
