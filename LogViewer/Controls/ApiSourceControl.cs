@@ -4,6 +4,7 @@ using LogViewer.AppContext;
 using LogViewer.Config.Models;
 using LogViewer.Controls.Helpers;
 using LogViewer.Providers.API;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace LogViewer.Controls
 {
@@ -22,12 +23,15 @@ namespace LogViewer.Controls
         private InternalApiClient? apiClient;
         private readonly ControlStateManager controlStateManager;
         private readonly ApiClientProvider apiClientProvider;
+        private readonly HybridCache hybridCache;
 
         CancellationTokenSource? cancellationTokenSource;
 
-        public ApiSourceControl()
+        public ApiSourceControl(HybridCache hybridCache)
         {
             InitializeComponent();
+
+            this.hybridCache = hybridCache;
 
             controlStateManager = new ControlStateManager([
                 richTextBoxInfoView,
@@ -86,7 +90,7 @@ namespace LogViewer.Controls
             dateTimePickerFrom.Value = DateTime.Now.Date;
             dateTimePickerUntill.Value = DateTime.Now.Date + TimeSpan.FromDays(1);
 
-            apiClientProvider = new ApiClientProvider();
+            apiClientProvider = new ApiClientProvider(hybridCache);
             apiClientProvider.SetPasswordProvider(DialogHelper.ShowPasswordPrompt);
         }
 
