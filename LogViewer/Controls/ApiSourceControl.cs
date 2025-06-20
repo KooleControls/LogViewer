@@ -79,7 +79,7 @@ namespace LogViewer.Controls
 
             buttonCancel.Click += (s, e) => cancellationTokenSource?.Cancel();
             buttonSearch.Click += (s, e) => LoadObjectItemsForResort(resortsManager.SelectedItem, textBoxSearch.Text);
-            buttonFetch.Click += ButtonFetch_Click;
+            buttonFetch.Click += (s, e) => FetchLogsForGateway(gatewaysManager.SelectedItem);
 
             checkBoxRequireGateways.CheckedChanged += (s, e) => LoadObjectItemsForResort(resortsManager.SelectedItem, textBoxSearch.Text);
 
@@ -93,6 +93,7 @@ namespace LogViewer.Controls
 
         public async Task LoadOrganisations(List<OrganisationConfig> organisationConfigs)
         {
+            
             await RunWithDisabledControlsAsync(async token =>
             {
                 await organisationsManager.Load(new ApiOrganisationProvider(organisationConfigs), token);
@@ -100,18 +101,21 @@ namespace LogViewer.Controls
         }
 
 
-        private async void LoadResortsForOrganisation(OrganisationConfig organisation)
+        private async void LoadResortsForOrganisation(OrganisationConfig? organisation)
         {
-            if (organisation?.BasePath == null || organisation.OrganisationId == null)
+            resortsManager.Clear();
+            infoViewManager.ClearOrganisationInfo();
+
+            if (organisation == null || organisation?.BasePath == null || organisation.OrganisationId == null) 
                 return;
+            
+            infoViewManager.Update(organisation);
 
             await RunWithDisabledControlsAsync(async token =>
             {
                 apiClient = await apiClientProvider.CreateAuthenticatedClientAsync(organisation, token);
                 if (apiClient == null)
                     return;
-
-                infoViewManager.ApiUrl = organisation.BasePath.ToString();
 
                 var provider = new ApiResortProviderBuilder(apiClient)
                     .ForOrganisation(organisation.OrganisationId.Value)
@@ -122,12 +126,15 @@ namespace LogViewer.Controls
             });
         }
 
-        private async void LoadObjectItemsForResort(Resort resort, string? searchField)
+        private async void LoadObjectItemsForResort(Resort? resort, string? searchField)
         {
-            if (apiClient == null || resort?.Id == null)
-                return;
+            objectItemsManager.Clear();
+            infoViewManager.ClearResortInfo();
 
-            UpdateInfoForResort(resort.Settings);
+            if (resort == null || apiClient == null || resort?.Id == null)
+                return;
+            
+            infoViewManager.Update(resort.Settings);
 
             await RunWithDisabledControlsAsync(async token =>
             {
@@ -147,21 +154,14 @@ namespace LogViewer.Controls
             });
         }
 
-        private void UpdateInfoForResort(ResortSettings? settings)
-        {
-            infoViewManager.IST = settings?.InstallCode ?? "";
-            infoViewManager.Host = settings?.ConnectionServerSettings?.ServerAddress ?? "";
-            infoViewManager.COM = settings?.ConnectionServerSettings?.ComPort?.ToString() ?? "";
-            infoViewManager.TRG = settings?.ConnectionServerSettings?.TrgPort?.ToString() ?? "";
-        }
 
-
-        private async void LoadGatewaysForObjectItem(ObjectItem objectItem)
+        private async void LoadGatewaysForObjectItem(ObjectItem? objectItem)
         {
-            if (apiClient == null)
+            gatewaysManager.Clear();
+
+            if (objectItem == null || apiClient == null || objectItem.Id == null)
                 return;
-            if (objectItem.Id == null)
-                return;
+            
             await RunWithDisabledControlsAsync(async token =>
             {
                 var provider = new ApiGatewayProviderBuilder(apiClient)
@@ -174,30 +174,24 @@ namespace LogViewer.Controls
             });
         }
 
-        private void UpdateInfoForGateway(Gateway gateway)
+        private void UpdateInfoForGateway(Gateway? gateway)
         {
-            if (apiClient == null)
-                return;
-            if (gateway.Id == null)
-                return;
+            infoViewManager.ClearGatewayInfo();
 
-            infoViewManager.SID = gateway.Sid?.ToString() ?? "";
-            infoViewManager.DEVID = gateway.GatewayId?.ToString() ?? "";
-
+            if (gateway == null || gateway.Id == null || apiClient == null)
+                return;
+            
+            infoViewManager.Update(gateway);
         }
 
-        private async void ButtonFetch_Click(object? sender, EventArgs e)
+        private async void FetchLogsForGateway(Gateway? gateway)
         {
-            var gateway = gatewaysManager.SelectedItem;
-            if (apiClient == null)
-                return;
-            if (gateway?.Id == null)
+            if (gateway == null || gateway.Id == null || apiClient == null)
                 return;
 
             await RunWithDisabledControlsAsync(async token =>
             {
                 var logProvider = new ApiGatewayLogProvider(apiClient, gateway.Id.Value, dateTimePickerFrom.Value, dateTimePickerUntill.Value);
-                string name = $"{organisationsManager.SelectedItem.Name} - {resortsManager.SelectedItem.Name} - {gatewaysManager.SelectedItem.Name}";
 
                 DataSource.ScopeViewContext.StartDate = dateTimePickerFrom.Value;
                 DataSource.ScopeViewContext.EndDate = dateTimePickerUntill.Value;
@@ -206,7 +200,6 @@ namespace LogViewer.Controls
                 OnDataChanged?.Invoke(this, EventArgs.Empty);
             });
         }
-
 
         private async Task RunWithDisabledControlsAsync(Func<CancellationToken, Task> task)
         {

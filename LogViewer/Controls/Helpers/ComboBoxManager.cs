@@ -8,7 +8,7 @@ namespace LogViewer.Controls.Helpers
 {
     public class ComboBoxManager<T>
     {
-        public event EventHandler<T>? SelectedItemChanged;
+        public event EventHandler<T?>? SelectedItemChanged;
         private readonly ComboBox comboBox;
 
         public ComboBoxManager(ComboBox comboBox)
@@ -24,11 +24,11 @@ namespace LogViewer.Controls.Helpers
             set => comboBox.DisplayMember = value;
         }
 
-        public T SelectedItem => (T)comboBox.SelectedItem;
+        public T? SelectedItem => (T?)comboBox.SelectedItem;
 
         public async Task Load(IApiDataProvider<T> dataProvider, CancellationToken token)
         {
-            ClearItems();
+            Clear();
             var newItems = dataProvider.GetData(token, Progress);
             await foreach (var item in newItems)
             {
@@ -75,17 +75,18 @@ namespace LogViewer.Controls.Helpers
             
         }
 
-        private void ClearItems()
+        public void Clear()
         {
             if (comboBox.InvokeRequired)
             {
-                comboBox.Invoke(ClearItems);
+                comboBox.Invoke(Clear);
                 return;
             }
 
             comboBox.Items.Clear();
-            comboBox.SelectedIndex = -1; // Ensure no item is selected
+            comboBox.SelectedIndex = -1;
             comboBox.Text = "";  
+            SelectedItemChanged?.Invoke(this, default(T));
         }
     }
 }
