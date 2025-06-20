@@ -1,54 +1,59 @@
 # LogViewer Configuration
 
-This repository contains the **public YAML configuration files** used by the LogViewer tool.
+The configuration system is designed for easy extension, overriding, and offline use.
 
-The configuration system is designed to make it easy to extend, override, and work offline.
+The **main configuration file** is:
 
-➡️ View/edit directly in VSCode online:  
-[https://vscode.dev/github/KooleControls/LogViewerConfig](https://vscode.dev/github/KooleControls/LogViewerConfig)
+`%LOCALAPPDATA%\LogViewer\release\config.yaml`
+
+This file is automatically created when you start the tool (if it doesn’t exist). It defines a list of **sources** YAML files containing configuration data such as organisations, profiles, and settings.
+
+Sources can be local or remote files. You can add your own sources to extend or override the default configuration.
+
+| Feature                   | Description                                                          |
+| ------------------------- | -------------------------------------------------------------------- |
+| **Merging**               | Profiles, traces, and settings are merged based on their name/type   |
+| **Recursive loading**     | Config files can include other sources recursively                   |
+| **Relative path support** | Paths can be relative to the including file (local or remote)        |
+| **Caching**               | Remote configs are cached locally for offline use                    |
+| **Schema-based editing**  | VSCode supports YAML validation and autocomplete via `schema.json`   |
+| **Offline fallback**      | Uses the last cached version if the source is offline or unreachable |
 
 
-## Add your own organisations
+# Adding a Custom Organisation
 
-You can add custom organisation settings by creating a local YAML file:
+You can add your own organisations to the configuration — for example, to connect to acceptation environments or internal systems. This allows you to test or use additional environments without changing the shared configuration.
+
+Organisations that need to be added for **all users** are managed by **Team 2**.
+If you want an organisation included globally, create an issue and provide an example configuration.
+
+## Example: add your own organisation
+
+1️⃣ Create a YAML file with your custom organisation settings.
+The location of this file does not matter, but a good example is:
+
+`%LOCALAPPDATA%\LogViewer\user\organisations.yaml`
+
+Example content:
 
 ```yaml
-#%LOCALAPPDATA%\LogViewer\user\organisations.yaml
 organisations:
-  - name: My Company
-    uri: https://api.mycompany.com/api
+  my_acceptation_env:
+    name: My Acceptation Environment
     organisationId: 42
+    basePath: https://acceptation.mycompany.com/api
     authenticationMethod: GetOAuth2_OpenIdConnectClient
-    authPath: https://accounts.mycompany.com/realms/myrealm
+    authPath: https://accounts.mycompany.com/realms/acceptation
 ```
 
-Next, add the new file to the main config file on your pc.
-If it doesn’t exist, you can start the tool, it will be created automatically.
+2️⃣ Update your main configuration file so that your custom file is loaded:
 
-```yaml
-#%LOCALAPPDATA%\LogViewer\config.yaml
-sources:
-  - https://raw.githubusercontent.com/KooleControls/LogViewerConfig/Releases/%APPVERSION%/Sources.yaml 
-  - %LOCALAPPDATA%\LogViewer\user\organisations.yaml
-```
-
-**Or override** the configuration entirely:
+`%LOCALAPPDATA%\LogViewer\release\config.yaml`
 
 ```yaml
 sources:
-#  - https://raw.githubusercontent.com/KooleControls/LogViewerConfig/Releases/%APPVERSION%/Sources.yaml 
+  - https://raw.githubusercontent.com/KooleControls/LogViewerConfig/Releases/%APPVERSION%/Config/Sources.yaml
   - %LOCALAPPDATA%\LogViewer\user\organisations.yaml
 ```
 
-
-## Features Overview
-
-| Feature | Description |
-|:--------|:------------|
-| **Merging** | Profiles, traces, and settings are merged based on their name/type |
-| **Recursive loading** | Config files can include other sources recursively |
-| **Caching** | Remote configs are cached locally for offline use |
-| **Schema-based editing** | VSCode supports YAML validation and autocomplete via `schema.json` |
-| **Offline fallback** | Always uses the last cached version if offline or unreachable |
-
-
+This will load your custom organisation alongside the standard configuration.
