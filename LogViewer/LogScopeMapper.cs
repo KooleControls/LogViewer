@@ -163,6 +163,9 @@ namespace LogViewer
                             }
                         }
                         break;
+                    case ListChangedType.Reset:
+                        _appContext.ScopeViewContext.Markers.Clear();
+                        break;
                 }
             }
         }

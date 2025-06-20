@@ -27,6 +27,7 @@ namespace FormsLib.Scope
             Markers.Clear();
             Labels.Clear();
             Traces.Clear();
+            RedrawAll();
         }
 
 
