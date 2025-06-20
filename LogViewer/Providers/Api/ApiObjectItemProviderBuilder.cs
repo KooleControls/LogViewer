@@ -4,36 +4,36 @@ using Octokit;
 
 namespace LogViewer.Providers.API
 {
-    public class ObjectItemProviderBuilder
+    public class ApiObjectItemProviderBuilder
     {
         private readonly InternalApiClient client;
         private readonly List<string> filters = new();
         private readonly List<string> sort = new();
 
-        public ObjectItemProviderBuilder(InternalApiClient client)
+        public ApiObjectItemProviderBuilder(InternalApiClient client)
         {
             this.client = client;
         }
 
-        public ObjectItemProviderBuilder ForResort(int resortId)
+        public ApiObjectItemProviderBuilder ForResort(int resortId)
         {
             filters.Add($"Resort.Id::{resortId}");
             return this;
         }
 
-        public ObjectItemProviderBuilder WithRequireGateway()
+        public ApiObjectItemProviderBuilder WithRequireGateway()
         {
             filters.Add("Gateways.Id>:0");
             return this;
         }
 
-        public ObjectItemProviderBuilder WhereName(string nameFilter)
+        public ApiObjectItemProviderBuilder WhereName(string nameFilter)
         {
-            filters.Add($"Name::{nameFilter}");
+            filters.Add($"Name:%{nameFilter}%");
             return this;
         }
 
-        public ObjectItemProviderBuilder WithSortByName()
+        public ApiObjectItemProviderBuilder WithSortByName()
         {
             sort.Clear();
             sort.Add("Name");
@@ -42,8 +42,11 @@ namespace LogViewer.Providers.API
 
         public ApiDataProvider<ObjectItem> Build()
         {
-            Func<InternalApiClient, List<string>, List<string>, CancellationToken, IProgress<double>?, IAsyncEnumerable<ObjectItem>> getItemsFunc = 
-                (c, f, s, t, p) => c.ObjectApi.GetAllItemsAsync(f, s, t, p);
+            Func<InternalApiClient, List<string>, List<string>, CancellationToken, IProgress<double>?, IAsyncEnumerable<ObjectItem>> getItemsFunc =
+                (c, f, s, t, p) =>
+                {
+                    return c.ObjectApi.GetAllItemsAsync(f, s, t, p);
+                };
             
             return new ApiDataProvider<ObjectItem>(
                 client,

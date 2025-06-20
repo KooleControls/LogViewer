@@ -6,7 +6,7 @@ namespace LogViewer.Controls.Helpers
 {
     public class ListBoxManager<T>
     {
-        public event EventHandler<T>? SelectedItemChanged;
+        public event EventHandler<T?>? SelectedItemChanged;
         private readonly ListBox listBox;
 
         public ListBoxManager(ListBox listBox)
@@ -20,7 +20,7 @@ namespace LogViewer.Controls.Helpers
         public async Task Load(IApiDataProvider<T> dataProvider, CancellationToken token)
         {
             var newItems = dataProvider.GetData(token, Progress);
-            ClearItems();
+            Clear();
             await foreach (var item in newItems)
             {
                 token.ThrowIfCancellationRequested();
@@ -57,16 +57,16 @@ namespace LogViewer.Controls.Helpers
             }
         }
 
-        private void ClearItems()
+        public void Clear()
         {
             if (listBox.InvokeRequired)
             {
-                listBox.Invoke(new Action(() => listBox.Items.Clear()));
+                listBox.Invoke(Clear);
+                return;
             }
-            else
-            {
-                listBox.Items.Clear();
-            }
+
+            listBox.Items.Clear();
+            SelectedItemChanged?.Invoke(this, default(T));
         }
     }
 
