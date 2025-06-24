@@ -1,15 +1,20 @@
 ﻿using KC.InternalApiClient;
 using LogViewer.Config.Models;
+using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LogViewer.Controls.Helpers
 {
     public class ApiClientProvider
     {
         private Func<string, string, string?> passwordProvider;
+        private readonly HybridCache hybridCache;
 
         public ApiClientProvider()
         {
             passwordProvider = (prompt, title) => "";
+            hybridCache = Program.ServiceProvider.GetRequiredService<HybridCache>();
+
         }
 
         public void SetPasswordProvider(Func<string, string, string?> provider)
@@ -55,13 +60,14 @@ namespace LogViewer.Controls.Helpers
             return org.AuthenticationMethod switch
             {
                 AuthenticationMethods.GetOAuth2_OpenIdConnectClient =>
-                    InternalApiClient.GetOAuth2OpenIdConnectClient(org.BasePath, org.AuthPath, org.ClientId),
+                    InternalApiClient.GetOAuth2OpenIdConnectClient(org.BasePath, org.AuthPath, org.ClientId, hybridCache),
 
                 AuthenticationMethods.GetOAuth2_ApplicationFlowClient =>
                     InternalApiClient.GetOAuth2ApplicationFlowClient(
                         org.BasePath,
                         org.ClientId,
-                        GetClientSecret(org)),
+                        GetClientSecret(org),
+                        hybridCache),
 
                 _ => null
             };

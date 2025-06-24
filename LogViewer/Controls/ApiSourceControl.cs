@@ -4,6 +4,7 @@ using LogViewer.AppContext;
 using LogViewer.Config.Models;
 using LogViewer.Controls.Helpers;
 using LogViewer.Providers.API;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace LogViewer.Controls
 {
@@ -22,6 +23,7 @@ namespace LogViewer.Controls
         private InternalApiClient? apiClient;
         private readonly ControlStateManager controlStateManager;
         private readonly ApiClientProvider apiClientProvider;
+
 
         CancellationTokenSource? cancellationTokenSource;
 

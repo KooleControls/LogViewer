@@ -1,19 +1,42 @@
 using FormsLib;
+using LogViewer.Config.Helpers;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LogViewer
 {
     internal static class Program
     {
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
+#if DEBUG
+        private static readonly string _sqLiteCachePath = PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer\\debug\\cache\\cache.sqlite");
+#else
+        private static readonly string _sqLiteCachePath = PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer\\release\\cache\\cache.sqlite");
+#endif
+
+
+        public static IServiceProvider ServiceProvider { get; private set; }
+
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
+            // Initialize SQLitePCL provider
+            SQLitePCL.Batteries.Init();
+
             ApplicationConfiguration.Initialize();
-            Application.Run(new Form1());
+            var services = new ServiceCollection();
+            ConfigureServices(services);
+            ServiceProvider = services.BuildServiceProvider();
+            Application.Run(ServiceProvider.GetRequiredService<Form1>());
+
         }
+
+        private static void ConfigureServices(IServiceCollection services)
+        {
+            services.AddTransient<Form1>();
+            services.AddMemoryCache();
+            services.AddSingleton<IDistributedCache>(sp => new SqliteDistributedCache(_sqLiteCachePath));
+            services.AddHybridCache();
+        }
+
     }
 }

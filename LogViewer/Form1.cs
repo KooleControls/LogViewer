@@ -5,6 +5,7 @@ using LogViewer.AppContext;
 using LogViewer.Config;
 using LogViewer.Config.Models;
 using LogViewer.Utils;
+using Microsoft.Extensions.Caching.Hybrid;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Windows.Forms;
@@ -52,7 +53,7 @@ namespace LogViewer
             // Load configuration settings
             this.Load += Form1_Load;
 
-#if RELEASE                        
+#if RELEASE
             this.Size = new Size(1280, 720);
 #endif
         }
@@ -61,10 +62,17 @@ namespace LogViewer
         {
             // Load config from cache
             var config = await configurationService.GetConfigAsync();
-            await LoadConfig(config);
+            try
+            {
+                await LoadConfig(config);
+            }
+            catch (Exception ex) {
+                MessageBox.Show($"Failed to load configuration: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
             // Check for new config in background
-            _= CheckForUpdates();
+            _ = CheckForUpdates();
         }
 
         private async Task LoadConfig(LogViewerConfig config)
