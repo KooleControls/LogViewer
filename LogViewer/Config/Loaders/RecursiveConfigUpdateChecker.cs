@@ -42,10 +42,10 @@ namespace LogViewer.Config.Loaders
             }
             
             if (!File.Exists(path))
-                return updated;
+                throw new FileNotFoundException($"Configuration file not found: {path}");
 
             if (!YamlSerializer.LoadYaml(new FileInfo(path), out LogViewerConfig config))
-                return updated;
+                throw new Exception($"Failed to load configuration from: {path}");
 
             string basePath = PathHelper.GetBasePath(orig);
 

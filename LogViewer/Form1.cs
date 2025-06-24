@@ -62,10 +62,17 @@ namespace LogViewer
         {
             // Load config from cache
             var config = await configurationService.GetConfigAsync();
-            await LoadConfig(config);
+            try
+            {
+                await LoadConfig(config);
+            }
+            catch (Exception ex) {
+                MessageBox.Show($"Failed to load configuration: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
             // Check for new config in background
-            _= CheckForUpdates();
+            _ = CheckForUpdates();
         }
 
         private async Task LoadConfig(LogViewerConfig config)
