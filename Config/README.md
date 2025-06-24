@@ -53,7 +53,7 @@ organisations:
 ```yaml
 sources:
   - https://raw.githubusercontent.com/KooleControls/LogViewerConfig/Releases/%APPVERSION%/Config/Sources.yaml
-  - %LOCALAPPDATA%\LogViewer\user\organisations.yaml
+  - "%LOCALAPPDATA%/LogViewer/user/organisations.yaml"
 ```
 
 This will load your custom organisation alongside the standard configuration.
