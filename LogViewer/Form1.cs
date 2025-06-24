@@ -61,9 +61,10 @@ namespace LogViewer
         private async void Form1_Load(object? sender, EventArgs e)
         {
             // Load config from cache
-            var config = await configurationService.GetConfigAsync();
+            
             try
             {
+                var config = await configurationService.GetConfigAsync();
                 await LoadConfig(config);
             }
             catch (Exception ex) {
