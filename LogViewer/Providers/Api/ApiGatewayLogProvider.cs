@@ -45,14 +45,14 @@ namespace LogViewer.Providers.API
 
             while (true)
             {
-                token.ThrowIfCancellationRequested();
-
                 var stopwatch = Stopwatch.StartNew();
                 try
                 {
                     var apiResult = await client.GatewayLogApi.GetAllAsync(page, 25, filters, null, token);
                     stopwatch.Stop();
                     Debug.WriteLine($"Call took {stopwatch.ElapsedMilliseconds} ms");
+
+                    token.ThrowIfCancellationRequested();
 
                     // Exit the loop when no more data is returned
                     if (apiResult.Data.Count == 0)
