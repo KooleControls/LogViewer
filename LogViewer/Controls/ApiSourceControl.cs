@@ -223,7 +223,7 @@ namespace LogViewer.Controls
             {
                 progressBarManager.Reset();
                 controlStateManager.EnableAll();
-                cancellationTokenSource.Dispose();
+                cancellationTokenSource?.Dispose();
                 cancellationTokenSource = null;
             }
         }

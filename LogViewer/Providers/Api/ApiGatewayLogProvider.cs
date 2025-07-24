@@ -80,6 +80,11 @@ namespace LogViewer.Providers.API
 
                     page++; // Move to the next page
                 }
+                catch (OperationCanceledException)
+                {
+                    Debug.WriteLine("Operation was canceled.");
+                    return log; // Return the log collected so far if the operation is canceled
+                }
                 catch (Exception ex) when (!(ex is OperationCanceledException))
                 {
                     Debug.WriteLine($"Error occurred during API call: {ex.Message}");
