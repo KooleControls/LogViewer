@@ -84,9 +84,11 @@ namespace LogViewer.Providers.API
 
 
                 default:
-                    builder.WithSegment(LogKeys.RawData, logItem.Data);
                     break;
             }
+
+
+            builder.WithSegment(LogKeys.RawData, logItem.Data);
 
             return builder.Build();
         }

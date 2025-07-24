@@ -5,6 +5,7 @@ using LogViewer.Config.Models;
 using LogViewer.Controls.Helpers;
 using LogViewer.Providers.API;
 using Microsoft.Extensions.Caching.Hybrid;
+using System.Security.Cryptography;
 
 namespace LogViewer.Controls
 {
@@ -141,8 +142,8 @@ namespace LogViewer.Controls
             await RunWithDisabledControlsAsync(async token =>
             {
                 var builder = new ApiObjectItemProviderBuilder(apiClient)
-                .ForResort(resort.Id.Value)
-                .WithSortByName();
+                    .ForResort(resort.Id.Value)
+                    .WithSortByName();
 
                 if (checkBoxRequireGateways.Checked)
                     builder.WithRequireGateway();
@@ -195,6 +196,13 @@ namespace LogViewer.Controls
             {
                 var logProvider = new ApiGatewayLogProvider(apiClient, gateway.Id.Value, dateTimePickerFrom.Value, dateTimePickerUntill.Value);
 
+
+                infoViewManager.ClearApiStatsInfo();
+                logProvider.OnResponseTimeReported += (s, responseTime) =>
+                {
+                    infoViewManager.ReportApiCall(responseTime);
+                };
+
                 DataSource.ScopeViewContext.StartDate = dateTimePickerFrom.Value;
                 DataSource.ScopeViewContext.EndDate = dateTimePickerUntill.Value;
 
@@ -223,7 +231,7 @@ namespace LogViewer.Controls
             {
                 progressBarManager.Reset();
                 controlStateManager.EnableAll();
-                cancellationTokenSource.Dispose();
+                cancellationTokenSource?.Dispose();
                 cancellationTokenSource = null;
             }
         }
