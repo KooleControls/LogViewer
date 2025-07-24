@@ -4,6 +4,7 @@ using LogViewer;
 using LogViewer.Config.Cache;
 using LogViewer.Config.Helpers;
 using LogViewer.Serializers.Yaml;
+using System.Diagnostics;
 
 namespace LogViewer.Config.Loaders
 {
@@ -40,7 +41,10 @@ namespace LogViewer.Config.Loaders
                 : path;
 
             if (!File.Exists(filePath))
+            {
+                Debug.WriteLine($"File not found: {filePath}");
                 return;
+            }
 
             if (!YamlSerializer.LoadYaml(new FileInfo(filePath), out LogViewerConfig config))
                 throw new Exception($"Failed to load configuration from: {filePath}");
