@@ -15,6 +15,8 @@ namespace LogViewer.Providers.API
         private readonly DateTime from;
         private readonly DateTime until;
 
+        public event EventHandler<TimeSpan>? OnResponseTimeReported;
+
         public ApiGatewayLogProvider(InternalApiClient client, int gatewayId, DateTime from, DateTime until)
         {
             this.client = client;
@@ -50,8 +52,7 @@ namespace LogViewer.Providers.API
                 {
                     var apiResult = await client.GatewayLogApi.GetAllAsync(page, 25, filters, null, token);
                     stopwatch.Stop();
-                    Debug.WriteLine($"Call took {stopwatch.ElapsedMilliseconds} ms");
-
+                    OnResponseTimeReported?.Invoke(this, stopwatch.Elapsed);
                     token.ThrowIfCancellationRequested();
 
                     // Exit the loop when no more data is returned

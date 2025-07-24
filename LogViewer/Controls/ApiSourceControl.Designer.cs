@@ -49,11 +49,11 @@
             // 
             richTextBoxInfoView.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             richTextBoxInfoView.Font = new Font("Consolas", 9F);
-            richTextBoxInfoView.Location = new Point(3, 364);
+            richTextBoxInfoView.Location = new Point(3, 337);
             richTextBoxInfoView.Name = "richTextBoxInfoView";
             richTextBoxInfoView.ReadOnly = true;
             richTextBoxInfoView.ScrollBars = RichTextBoxScrollBars.None;
-            richTextBoxInfoView.Size = new Size(230, 63);
+            richTextBoxInfoView.Size = new Size(230, 90);
             richTextBoxInfoView.TabIndex = 27;
             richTextBoxInfoView.Text = "api\nhost\nheaders\ninfo";
             richTextBoxInfoView.WordWrap = false;
@@ -61,7 +61,7 @@
             // buttonFetch
             // 
             buttonFetch.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            buttonFetch.Location = new Point(168, 295);
+            buttonFetch.Location = new Point(168, 268);
             buttonFetch.Name = "buttonFetch";
             buttonFetch.Size = new Size(65, 23);
             buttonFetch.TabIndex = 26;
@@ -72,7 +72,7 @@
             // 
             label2.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label2.AutoSize = true;
-            label2.Location = new Point(4, 330);
+            label2.Location = new Point(4, 303);
             label2.Name = "label2";
             label2.Size = new Size(35, 15);
             label2.TabIndex = 25;
@@ -82,7 +82,7 @@
             // 
             label1.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label1.AutoSize = true;
-            label1.Location = new Point(4, 301);
+            label1.Location = new Point(4, 274);
             label1.Name = "label1";
             label1.Size = new Size(35, 15);
             label1.TabIndex = 24;
@@ -93,7 +93,7 @@
             dateTimePickerUntill.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             dateTimePickerUntill.CustomFormat = "yyyy-MM-dd HH:mm";
             dateTimePickerUntill.Format = DateTimePickerFormat.Custom;
-            dateTimePickerUntill.Location = new Point(67, 324);
+            dateTimePickerUntill.Location = new Point(67, 297);
             dateTimePickerUntill.Name = "dateTimePickerUntill";
             dateTimePickerUntill.Size = new Size(95, 23);
             dateTimePickerUntill.TabIndex = 23;
@@ -103,7 +103,7 @@
             dateTimePickerFrom.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             dateTimePickerFrom.CustomFormat = "yyyy-MM-dd HH:mm";
             dateTimePickerFrom.Format = DateTimePickerFormat.Custom;
-            dateTimePickerFrom.Location = new Point(67, 295);
+            dateTimePickerFrom.Location = new Point(67, 268);
             dateTimePickerFrom.Name = "dateTimePickerFrom";
             dateTimePickerFrom.Size = new Size(95, 23);
             dateTimePickerFrom.TabIndex = 22;
@@ -116,7 +116,7 @@
             listBoxObjectItems.ItemHeight = 15;
             listBoxObjectItems.Location = new Point(3, 120);
             listBoxObjectItems.Name = "listBoxObjectItems";
-            listBoxObjectItems.Size = new Size(230, 140);
+            listBoxObjectItems.Size = new Size(230, 113);
             listBoxObjectItems.TabIndex = 21;
             // 
             // textBoxSearch
@@ -131,7 +131,7 @@
             // progressBar1
             // 
             progressBar1.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            progressBar1.Location = new Point(4, 353);
+            progressBar1.Location = new Point(4, 326);
             progressBar1.Name = "progressBar1";
             progressBar1.Size = new Size(229, 5);
             progressBar1.TabIndex = 19;
@@ -140,7 +140,7 @@
             // 
             comboBoxGateways.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             comboBoxGateways.FormattingEnabled = true;
-            comboBoxGateways.Location = new Point(4, 266);
+            comboBoxGateways.Location = new Point(3, 239);
             comboBoxGateways.Name = "comboBoxGateways";
             comboBoxGateways.Size = new Size(230, 23);
             comboBoxGateways.TabIndex = 17;
@@ -166,7 +166,7 @@
             // buttonCancel
             // 
             buttonCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            buttonCancel.Location = new Point(168, 324);
+            buttonCancel.Location = new Point(168, 297);
             buttonCancel.Name = "buttonCancel";
             buttonCancel.Size = new Size(65, 23);
             buttonCancel.TabIndex = 28;
