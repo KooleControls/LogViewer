@@ -36,6 +36,7 @@ profiles:
           2: Cooling
           3: Heating
           4: Off
+          5: VacantAutoHeat
         includeLogs:
           SoftwareId: SmarthomeGateway
           LogCode: HeatmanagerStateChanged
