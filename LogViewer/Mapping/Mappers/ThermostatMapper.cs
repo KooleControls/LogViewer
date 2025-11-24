@@ -39,12 +39,11 @@ namespace LogViewer.Mapping.Mappers
                 Generator = entries =>
                 {
                     var actual = group
-                        .Where(e => e.LogCode is GatewayLogCodes code &&
-                                    code == GatewayLogCodes.Therm_TempActualChanged)
+                        .Where(e => e.IsGateway(GatewayLogCodes.Therm_TempActualChanged))
                         .Select(e => new TracePoint
                         {
                             X = e.TimeStamp,
-                            Y = Convert.ToDouble(e.Measurement ?? 0),
+                            Y = e.Measurement ?? 0,
                         });
                     return actual;
                 }
@@ -64,21 +63,19 @@ namespace LogViewer.Mapping.Mappers
                 Generator = entries =>
                 {
                     var actual = group
-                        .Where(e => e.LogCode is GatewayLogCodes code &&
-                                    code == GatewayLogCodes.Therm_TempSetpointChanged)
+                        .Where(e => e.IsGateway(GatewayLogCodes.Therm_TempSetpointChanged))
                         .Select(e => new TracePoint
                         {
                             X = e.TimeStamp,
-                            Y = Convert.ToDouble(e.Measurement ?? 0),
+                            Y = e.Measurement ?? 0,
                         });
                     
                     var overwrite = group
-                        .Where(e => e.LogCode is GatewayLogCodes code &&
-                                    code == GatewayLogCodes.TempSetpointOverride)
+                        .Where(e => e.IsGateway(GatewayLogCodes.TempSetpointOverride))
                         .Select(e => new TracePoint
                         {
                             X = e.TimeStamp,
-                            Y = Convert.ToDouble(e.Measurement ?? 0),
+                            Y = e.Measurement ?? 0,
                             Label = "OVE"
                         });
 
@@ -100,12 +97,11 @@ namespace LogViewer.Mapping.Mappers
                 BaseColor = Color.FromArgb(unchecked((int)0xFFCC5A00)),
                 ToHumanReadable = d => d == 0.0 ? "Off" : "On",
                 Generator = _ => group
-                    .Where(e => e.LogCode is GatewayLogCodes code &&
-                                code == GatewayLogCodes.Therm_HeatingRequestChanged)
+                    .Where(e => e.IsGateway(GatewayLogCodes.Therm_HeatingRequestChanged))
                     .Select(e => new TracePoint
                     {
                         X = e.TimeStamp,
-                        Y = Convert.ToBoolean(e.Measurement) ? 1.0 : 0.0,
+                        Y = e.Measurement ?? 0,
                     })
             };
         }
@@ -122,12 +118,11 @@ namespace LogViewer.Mapping.Mappers
                 BaseColor = Color.FromArgb(unchecked((int)0xFF008FFF)),
                 ToHumanReadable = d => d == 0.0 ? "Off" : "On",
                 Generator = _ => group
-                    .Where(e => e.LogCode is GatewayLogCodes code &&
-                                code == GatewayLogCodes.Therm_CoolingRequestChanged)
+                    .Where(e => e.IsGateway(GatewayLogCodes.Therm_CoolingRequestChanged))
                     .Select(e => new TracePoint
                     {
                         X = e.TimeStamp,
-                        Y = Convert.ToBoolean(e.Measurement) ? -1.0 : 0.0,
+                        Y = e.Measurement ?? 0,
                     })
             };
         }

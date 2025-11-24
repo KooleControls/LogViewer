@@ -48,8 +48,7 @@ namespace LogViewer.Mapping.Mappers
                 BaseColor = Color.FromArgb(unchecked((int)0xFF1FFF53)),
                 ToHumanReadable = stateLookup,
                 Generator = _ => group
-                    .Where(e => e.LogCode is GatewayLogCodes code &&
-                                code == GatewayLogCodes.SmartHomeStateChanged)
+                    .Where(e => e.IsGateway(GatewayLogCodes.SmartHomeStateChanged))
                     .Select(e => new TracePoint
                     {
                         X = e.TimeStamp,
@@ -83,8 +82,7 @@ namespace LogViewer.Mapping.Mappers
                 BaseColor = Color.FromArgb(unchecked((int)0xFF18CC43)),
                 ToHumanReadable = stateLookup,
                 Generator = _ => group
-                    .Where(e => e.LogCode is GatewayLogCodes code &&
-                                code == GatewayLogCodes.SmartHomeStateChanged)
+                    .Where(e => e.IsGateway(GatewayLogCodes.SmartHomeStateChanged))
                     .Select(e => new TracePoint
                     {
                         X = e.TimeStamp,
@@ -140,8 +138,7 @@ namespace LogViewer.Mapping.Mappers
                 BaseColor = Color.FromArgb(unchecked((int)0xFFFF0000)),
                 ToHumanReadable = errorLookup,
                 Generator = _ => group
-                    .Where(e => e.LogCode is GatewayLogCodes code &&
-                                code == GatewayLogCodes.CMN_ModbusError)
+                    .Where(e => e.IsGateway(GatewayLogCodes.CMN_ModbusError))
                     .Select(e => new TracePoint
                     {
                         X = e.TimeStamp,

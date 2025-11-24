@@ -5,6 +5,7 @@ using DeviceType = LogViewer.Logging.DeviceType;
 
 namespace LogViewer.Devices.Gateway
 {
+
     public class GatewayLogConverter
     {
 
@@ -23,7 +24,7 @@ namespace LogViewer.Devices.Gateway
             LogEntry logEntry = new LogEntry()
             {
                 TimeStamp = logItem.TimeStamp.Value,
-                LogCode = logCode,
+                LogCode = (UInt32)logCode,
                 RawData = logItem.Data,
             };
 
@@ -43,7 +44,7 @@ namespace LogViewer.Devices.Gateway
                 case GatewayLogCodes.xB1_EXTPCB_REP_VERS:
                     logEntry.DeviceType = DeviceType.ExtentionModule_1246;
                     logEntry.DeviceId = 0;
-                    logEntry.Measurement = Encoding.ASCII.GetString(data);
+                    logEntry.Metadata = Encoding.ASCII.GetString(data);
                     break;
                 case GatewayLogCodes.TempSetpointOverride:
                 case GatewayLogCodes.Therm_TempActualChanged:
@@ -57,7 +58,7 @@ namespace LogViewer.Devices.Gateway
                 case GatewayLogCodes.Therm_HeatingRequestChanged:
                     logEntry.DeviceType = DeviceType.Thermostat;
                     logEntry.DeviceId = 0;
-                    logEntry.Measurement = BitConverter.ToBoolean(data, 3);
+                    logEntry.Measurement = BitConverter.ToBoolean(data, 3) ? 1 : 0;
                     break;
 
                 case GatewayLogCodes.SmartHomeStateChanged:
@@ -73,7 +74,7 @@ namespace LogViewer.Devices.Gateway
                 case GatewayLogCodes.Relais2Changed:
                     logEntry.DeviceType = DeviceType.Gateway_1245;
                     logEntry.DeviceId = 0;
-                    logEntry.Measurement = BitConverter.ToBoolean(data, 3);
+                    logEntry.Measurement = BitConverter.ToBoolean(data, 3) ? 1 : 0;
                     break;
 
                 case GatewayLogCodes.CMN_ModbusError:
@@ -85,7 +86,7 @@ namespace LogViewer.Devices.Gateway
                 case GatewayLogCodes.Hvac_IsFaultChanged:
                     logEntry.DeviceType = DeviceType.HvacUnit;
                     logEntry.DeviceId = data[3];
-                    logEntry.Measurement = BitConverter.ToBoolean(data, 4);
+                    logEntry.Measurement = BitConverter.ToBoolean(data, 4) ? 1 : 0;
                     break;
 
                 case GatewayLogCodes.Hvac_FaultCodeChanged:
