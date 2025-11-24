@@ -6,10 +6,13 @@ using LogViewer.Mapping.Models;
 
 namespace LogViewer.Mapping
 {
+
     public class TraceFactory
     {
-        public Trace CreateTrace(AssignedTrace assigned, IEnumerable<LogEntry> entries)
+        public BuiltTrace CreateTrace(AssignedTrace assigned, IEnumerable<LogEntry> entries)
         {
+            var built = new BuiltTrace();
+
             var trace = new Trace
             {
                 Name = assigned.Descriptor.TraceId,
@@ -22,12 +25,28 @@ namespace LogViewer.Mapping
                 ToHumanReadable = assigned.Descriptor.ToHumanReadable,
             };
 
+            built.Trace = trace;
+
             foreach (var pt in assigned.Descriptor.Generator(entries))
             {
-                trace.Points.Add(new PointD(pt.X.Ticks, pt.Y));
+                if (string.IsNullOrEmpty(pt.Label))
+                {
+                    trace.Points.Add(new PointD(pt.X.Ticks, pt.Y));
+                }
+                else
+                {
+                    var label = new LinkedLabel(trace)
+                    {
+                        Point = new PointD(pt.X.Ticks, pt.Y),
+                        Text = pt.Label,
+                    };
+
+                    built.Labels.Add(label);
+                }
             }
 
-            return trace;
+            return built;
         }
+
     }
 }

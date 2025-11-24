@@ -8,5 +8,6 @@
 
         public DateTime X { get; set; }
         public double Y { get; set; }
+        public string? Label { get; set; }
     }
 }

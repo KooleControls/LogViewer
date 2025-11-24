@@ -17,5 +17,10 @@ namespace LogViewer.Mapping.Models
         public string Source { get; set; } = "";
         public Func<IEnumerable<LogEntry>, IEnumerable<TracePoint>> Generator
             = _ => Enumerable.Empty<TracePoint>();
+
+        public override string ToString()
+        {
+            return TraceId;
+        }
     }
 }

@@ -1,6 +1,5 @@
 using FormsLib.Extentions;
 using FormsLib.Scope;
-using KCObjectsStandard.Data.Api.KC;
 using LogViewer.AppContext;
 using LogViewer.Config;
 using LogViewer.Config.Models;
@@ -8,11 +7,7 @@ using LogViewer.Mapping;
 using LogViewer.Mapping.Mappers;
 using LogViewer.Mapping.Models;
 using LogViewer.Utils;
-using Microsoft.Extensions.Caching.Hybrid;
-using System.Collections.Generic;
 using System.Reflection;
-using System.Windows.Forms;
-using static LogViewer.Mapping.Mappers.ThermostatMapper;
 
 namespace LogViewer
 {
@@ -54,7 +49,8 @@ namespace LogViewer
             {
                 new ThermostatMapper(),
                 new HvacMapper(),
-                new SmarthomeMapper()
+                new SmarthomeMapper(),
+                new UnknownMapper()
             };
 
             _pipeline = new TracePipeline(mappers);
@@ -163,13 +159,10 @@ namespace LogViewer
                 return;
 
             var entries = appContext.LogCollection.Entries;
+            if (!entries.Any())
+                return;
 
-            // Determine the horizontal range
-            DateTime from = entries.Min(e => e.TimeStamp);
-            DateTime until = entries.Max(e => e.TimeStamp);
-
-            // Apply to scope view
-            scopeController.Settings.SetHorizontal(from, until);
+            scopeController.Settings.SetHorizontal(appContext.ScopeViewContext.StartDate, appContext.ScopeViewContext.EndDate);
 
             var assigned = _pipeline.Run(entries);
             _adapter.Load(assigned, entries);

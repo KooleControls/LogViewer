@@ -20,10 +20,13 @@ namespace LogViewer.Mapping
 
             var factory = new TraceFactory();
 
-            foreach (var at in assignedTraces)
+            foreach (var assigned in assignedTraces)
             {
-                var trace = factory.CreateTrace(at, entries);
-                _scope.Traces.Add(trace);
+                var built = factory.CreateTrace(assigned, entries);
+                _scope.Traces.Add(built.Trace);
+
+                foreach (var label in built.Labels)
+                    _scope.Labels.Add(label);
             }
         }
     }

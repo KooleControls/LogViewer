@@ -1,4 +1,5 @@
 ﻿using LogViewer.Mapping.Models;
+using System.Runtime.InteropServices;
 using static FormsLib.Scope.Trace;
 
 namespace LogViewer.Mapping
@@ -23,6 +24,7 @@ namespace LogViewer.Mapping
                 // inside each group: Temperature, State, Setpoint...
                 foreach (var desc in group.OrderBy(d => d.Category))
                 {
+
                     if (desc.DrawStyle == DrawStyles.Lines)
                     {
                         result.Add(new AssignedTrace
@@ -31,8 +33,7 @@ namespace LogViewer.Mapping
                             VerticalOffset = 0,
                         });
                     }
-
-                    if (desc.DrawStyle == DrawStyles.State)
+                    else if (desc.DrawStyle == DrawStyles.State)
                     {
                         result.Add(new AssignedTrace
                         {
@@ -41,31 +42,35 @@ namespace LogViewer.Mapping
                         });
                         offset += OffsetStep;
                     }
+                    else
+                    {
+                        result.Add(new AssignedTrace
+                        {
+                            Descriptor = desc,
+                            VerticalOffset = 0,
+                        });
+                    }
                 }
             }
 
             return result;
         }
 
-
-
-
-
         private int GetGroupPriority(string groupId)
         {
-            if (groupId.StartsWith("HVAC:"))
-                return 3;
+            var order = new List<string>
+            {
+                "SHM:",
+                "THR:",
+                "HVAC:",
+            };
 
-            if (groupId.StartsWith("THR:"))
-                return 2;
+            foreach (var group in order) {
+                if (groupId.StartsWith(group))
+                    return order.IndexOf(group) + 1;
+            }
 
-            if (groupId.StartsWith("HEATMAN:"))
-                return 1;
-
-            if (groupId.StartsWith("SHM:"))
-                return 0;
-
-            return -1;
+            return 0;
         }
     }
 }

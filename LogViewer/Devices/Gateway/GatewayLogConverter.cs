@@ -45,7 +45,7 @@ namespace LogViewer.Devices.Gateway
                     logEntry.DeviceId = 0;
                     logEntry.Measurement = Encoding.ASCII.GetString(data);
                     break;
-
+                case GatewayLogCodes.TempSetpointOverride:
                 case GatewayLogCodes.Therm_TempActualChanged:
                 case GatewayLogCodes.Therm_TempSetpointChanged:
                     logEntry.DeviceType = DeviceType.Thermostat;
