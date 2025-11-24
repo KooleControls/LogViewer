@@ -62,13 +62,11 @@ namespace LogViewer.Devices.Gateway
 
                 case GatewayLogCodes.SmartHomeStateChanged:
                 case GatewayLogCodes.HeatmanagerStateChanged:
-                    logEntry.DeviceType = DeviceType.Thermostat;
+                    logEntry.DeviceType = DeviceType.Smarthome;
                     logEntry.DeviceId = 0;
                     logEntry.Measurement = data[4];
                     break;
 
-                case GatewayLogCodes.HeaterActiveChanged:
-                case GatewayLogCodes.CoolerActiveChanged:
                 case GatewayLogCodes.Input1Changed:
                 case GatewayLogCodes.Input2Changed:
                 case GatewayLogCodes.Relais1Changed:

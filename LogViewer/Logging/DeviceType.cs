@@ -7,5 +7,6 @@
         ExtentionModule_1246,
         Thermostat,
         HvacUnit,
+        Smarthome,
     }
 }

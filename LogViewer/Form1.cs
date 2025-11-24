@@ -4,11 +4,15 @@ using KCObjectsStandard.Data.Api.KC;
 using LogViewer.AppContext;
 using LogViewer.Config;
 using LogViewer.Config.Models;
+using LogViewer.Mapping;
+using LogViewer.Mapping.Mappers;
+using LogViewer.Mapping.Models;
 using LogViewer.Utils;
 using Microsoft.Extensions.Caching.Hybrid;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Windows.Forms;
+using static LogViewer.Mapping.Mappers.ThermostatMapper;
 
 namespace LogViewer
 {
@@ -17,6 +21,8 @@ namespace LogViewer
         private readonly LogViewerContext appContext;
         private readonly ScopeController scopeController;
         private readonly ConfigurationService configurationService;
+        private TracePipeline? _pipeline;
+        private ScopeControllerAdapter? _adapter;
 
         public Form1()
         {
@@ -39,8 +45,20 @@ namespace LogViewer
             apiSourceControl1.DataSource = appContext;
             apiSourceControl1.OnDataChanged += (s, e) => UpdateLogView();
 
+
+
             // Set up the menu items and update the window title
             UpdateTitle();
+
+            var mappers = new List<ITraceMapper>
+            {
+                new ThermostatMapper(),
+                new HvacMapper(),
+                new SmarthomeMapper()
+            };
+
+            _pipeline = new TracePipeline(mappers);
+            _adapter = new ScopeControllerAdapter(scopeController);
 
             // Load configuration settings
             this.Load += Form1_Load;
@@ -77,7 +95,6 @@ namespace LogViewer
             // Load the organisations
             await apiSourceControl1.LoadOrganisations(config.Organisations.Values.ToList());
         }
-
         private async Task<bool> CheckForApplicationUpdates()
         {
             Version? version = Assembly.GetExecutingAssembly().GetName().Version;
@@ -85,12 +102,10 @@ namespace LogViewer
             var latestVersion = await checker.GetLatestVersionAsync();
             return latestVersion > version; 
         }
-
         private async Task<bool> CheckForConfigurationUpdates()
         {
             return await configurationService.DownloadIfUpdatedAsync();
         }
-
         private async Task CheckForUpdates()
         {
             toolStripStatusLabel1.Text = "Checking for config updates";
@@ -124,8 +139,6 @@ namespace LogViewer
 
             toolStripStatusLabel1.Text = "Up-to-date";
         }
-
-
         private void UpdateMenu(LogViewerConfig config)
         {
             // Clear existing menu items
@@ -146,8 +159,21 @@ namespace LogViewer
 
         private void UpdateLogView()
         {
-            // Redraw the log view based on the current data
+            if (_pipeline == null || _adapter == null)
+                return;
 
+            var entries = appContext.LogCollection.Entries;
+
+            // Determine the horizontal range
+            DateTime from = entries.Min(e => e.TimeStamp);
+            DateTime until = entries.Max(e => e.TimeStamp);
+
+            // Apply to scope view
+            scopeController.Settings.SetHorizontal(from, until);
+
+            var assigned = _pipeline.Run(entries);
+            _adapter.Load(assigned, entries);
+            scopeController.RedrawAll();
         }
 
         private void UpdateTitle()

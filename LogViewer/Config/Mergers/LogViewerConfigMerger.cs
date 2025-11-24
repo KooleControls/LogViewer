@@ -15,6 +15,9 @@ namespace LogViewer.Config.Mergers
             if (source is not LogViewerConfig second)
                 return false;
 
+            if (!merger.TryMerge(first.Organisations, second.Organisations))
+                return false;
+
             return true;
         }
     }
