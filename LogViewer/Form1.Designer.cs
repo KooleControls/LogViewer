@@ -34,8 +34,6 @@ namespace LogViewer
             FormsLib.Scope.ScopeController scopeController1 = new FormsLib.Scope.ScopeController();
             Logging.LogCollection logCollection1 = new Logging.LogCollection();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
-            ProfileConfig profileConfig1 = new ProfileConfig();
-            UnhandeledConfig unhandeledConfig1 = new UnhandeledConfig();
             ScopeViewContext scopeViewContext1 = new ScopeViewContext();
             splitContainer1 = new SplitContainer();
             splitContainer2 = new SplitContainer();
@@ -155,11 +153,6 @@ namespace LogViewer
             // 
             // apiSourceControl1
             // 
-            profileConfig1.Name = null;
-            profileConfig1.Traces = (Dictionary<string, TraceConfig>)resources.GetObject("profileConfig1.Traces");
-            unhandeledConfig1.NameKey = "LogCode";
-            unhandeledConfig1.Offset = 0;
-            profileConfig1.Unhandeled = unhandeledConfig1;
             scopeViewContext1.EndDate = new DateTime(0L);
             scopeViewContext1.StartDate = new DateTime(0L);
             apiSourceControl1.Dock = DockStyle.Fill;

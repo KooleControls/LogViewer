@@ -1,6 +1,7 @@
 ﻿using DevExpress.Data.Svg;
 using KC.InternalApi.Model;
 using KC.InternalApiClient;
+using LogViewer.Devices.Gateway;
 using LogViewer.Logging;
 using System.ComponentModel.Design;
 using System.Diagnostics;
@@ -37,9 +38,11 @@ namespace LogViewer.Providers.API
 
             double totalTimeSpan = (until - fromPercent).TotalSeconds;
 
+
+
             List<string> filters =
             [
-                $"Gateway.Id::{gatewayId}",
+                $"Gateway.Id::{2390}",
                 $"TimeStamp>:{from:s}",  // ISO 8601 format
                 $"TimeStamp<:{until:s}"  // ISO 8601 format
             ];
@@ -61,7 +64,7 @@ namespace LogViewer.Providers.API
 
                     foreach (var item in apiResult.Data)
                     {
-                        var convertedItem = WebApiLogItemConverter.ConvertItem(item);
+                        var convertedItem = GatewayLogConverter.ConvertItem(item);
                         if (convertedItem != null)
                         {
                             log.Entries.Add(convertedItem);

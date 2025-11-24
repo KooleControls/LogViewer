@@ -38,7 +38,7 @@ profiles:
         name: THR CoolReq
         unit: ""
         color: 0xFF008FFF
-        offset: -9
+        offset: -7.5
         drawStyle: State
         drawOption: ExtendEnd, DrawNames
         visible: Always

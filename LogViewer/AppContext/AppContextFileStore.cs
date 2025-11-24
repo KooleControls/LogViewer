@@ -69,7 +69,6 @@ namespace LogViewer.AppContext
                         if (YamlSerializer.LoadYaml(new FileInfo(dialog.FileName), out LogViewerContext yamlContext))
                         {
                             save.LogCollection = yamlContext.LogCollection;
-                            save.Profile = yamlContext.Profile;
                             save.ScopeViewContext = yamlContext.ScopeViewContext;
                             return true;
                         }
@@ -78,7 +77,6 @@ namespace LogViewer.AppContext
                         if (YamlSerializer.LoadYamlZip(new FileInfo(dialog.FileName), out LogViewerContext cyamlContext))
                         {
                             save.LogCollection = cyamlContext.LogCollection;
-                            save.Profile = cyamlContext.Profile;
                             save.ScopeViewContext = cyamlContext.ScopeViewContext;
                             return true;
                         }

@@ -11,7 +11,7 @@ profiles:
         visible: WhenData
         includeLogs:
           SoftwareId: SmarthomeGateway
-          LogCode: CMN_IndoorUnit_ActualTempChanged
+          LogCode: Hvac_ActualTempChanged
           DeviceId: 3
 
       iu_3_setpoint: 
@@ -23,7 +23,7 @@ profiles:
         visible: WhenData
         includeLogs:
           SoftwareId: SmarthomeGateway
-          LogCode: CMN_IndoorUnit_SetpointChanged
+          LogCode: Hvac_SetpointChanged
           DeviceId: 3
 
       iu_3_mode: 
@@ -35,38 +35,14 @@ profiles:
         visible: WhenData
         offset: -25.5
         stateNames:
-          0: Cool	      
-          1: Heat	      
-          2: Auto	      
-          3: Dry           
-          4: HAUX	      
-          5: Fan	          
-          6: HH	          
-          7: VAM_Auto	  
-          8: VAM_Bypass	  
-          9: VAM_Heat_Exch 
-          10: VAM_Normal    
-          11: Unknown		  
-          12: Off	
+          0: Off	      
+          1: Heating   
+          2: Cooling	      
+          3: Auto           
+          4: Unknown	   
         includeLogs:
           SoftwareId: SmarthomeGateway
-          LogCode: CMN_IndoorUnit_ModeChanged
-          DeviceId: 3
-
-      iu_3_power: 
-        name: IU 3 Power
-        unit: ""
-        color: 0xFFFF3D3D
-        drawStyle: State
-        drawOption: ExtendEnd, DrawNames
-        visible: WhenData
-        offset: -27
-        stateNames:
-          0: Off
-          1: On
-        includeLogs:
-          SoftwareId: SmarthomeGateway
-          LogCode: CMN_IndoorUnit_OnOffChanged
+          LogCode: Hvac_ModeChanged
           DeviceId: 3
 
       iu_3_fault: 
@@ -79,5 +55,5 @@ profiles:
         offset: -28.5
         includeLogs:
           SoftwareId: SmarthomeGateway
-          LogCode: CMN_IndoorUnit_FaultCodeChanged
+          LogCode: Hvac_FaultCodeChanged
           DeviceId: 3

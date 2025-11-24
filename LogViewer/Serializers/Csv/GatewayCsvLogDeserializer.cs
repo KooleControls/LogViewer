@@ -1,5 +1,6 @@
 ﻿using KC.InternalApi.Model;
 using LogViewer.AppContext;
+using LogViewer.Devices.Gateway;
 using LogViewer.Logging;
 using LogViewer.Providers.API;
 using System.Globalization;
@@ -25,7 +26,7 @@ namespace LogViewer.Serializers.Csv
 
                 if (TryParse(line, out var gatewayLog))
                 {
-                    var entry = WebApiLogItemConverter.ConvertItem(gatewayLog);
+                    var entry = GatewayLogConverter.ConvertItem(gatewayLog);
 
                     if (entry != null)
                     {

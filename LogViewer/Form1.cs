@@ -10,17 +10,12 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Windows.Forms;
 
-
-
-
 namespace LogViewer
 {
-
     public partial class Form1 : Form
     {
         private readonly LogViewerContext appContext;
         private readonly ScopeController scopeController;
-        private readonly LogScopeMapper scopeMapper;
         private readonly ConfigurationService configurationService;
 
         public Form1()
@@ -39,9 +34,6 @@ namespace LogViewer
             scopeView1.DataSource = scopeController;
             markerView1.DataSource = scopeController;
             traceView1.DataSource = scopeController;
-
-            // Initialize log scope mapper
-            scopeMapper = new LogScopeMapper(scopeController, appContext);
 
             // Configure data source and event handler for source selection control
             apiSourceControl1.DataSource = appContext;
@@ -81,11 +73,6 @@ namespace LogViewer
 
             // Update menu, so it shows profiles
             UpdateMenu(config);
-
-            // Load default profile
-            var profile = config.Profiles.FirstOrDefault().Value;
-            if (profile != null)
-                LoadProfile(config, profile);
 
             // Load the organisations
             await apiSourceControl1.LoadOrganisations(config.Organisations.Values.ToList());
@@ -138,12 +125,6 @@ namespace LogViewer
             toolStripStatusLabel1.Text = "Up-to-date";
         }
 
-        private void LoadProfile(LogViewerConfig config, ProfileConfig profile)
-        {
-            appContext.Profile = profile;
-            UpdateLogView();
-            UpdateMenu(config);
-        }
 
         private void UpdateMenu(LogViewerConfig config)
         {
@@ -157,14 +138,7 @@ namespace LogViewer
             menuStrip1.AddMenuItem("File/Close", (menuItem) => this.Close());
 
             // Add menu items for profile selection
-            foreach (var profile in config.Profiles)
-            {
-                string activeText = profile.Value == appContext.Profile ? "(active)" : "";
-                menuStrip1.AddMenuItem($"Profiles/{profile.Value.Name} {activeText}", (menuItem) =>
-                {
-                    LoadProfile(config, profile.Value);
-                });
-            }
+
 
             // Add help menu item
             menuStrip1.AddMenuItem("Help", (menuItem) => Help.ShowHelp());
@@ -173,7 +147,7 @@ namespace LogViewer
         private void UpdateLogView()
         {
             // Redraw the log view based on the current data
-            scopeMapper.Redraw();
+
         }
 
         private void UpdateTitle()
