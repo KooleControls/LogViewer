@@ -39,7 +39,7 @@ namespace LogViewer.Mapping.Mappers
                 Generator = entries =>
                 {
                     var actual = group
-                        .Where(e => e.IsGateway(GatewayLogCodes.Therm_TempActualChanged))
+                        .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Therm_TempActualChanged)
                         .Select(e => new TracePoint
                         {
                             X = e.TimeStamp,
@@ -57,13 +57,13 @@ namespace LogViewer.Mapping.Mappers
                 TraceId = $"THR{id}_TempSetpoint",
                 Category = "Setpoint",
                 EntityId = $"THR:{id}",
-                DrawStyle = DrawStyles.Lines,
+                DrawStyle = DrawStyles.NonInterpolatedLine,
                 DrawOption = DrawOptions.None,
                 BaseColor = Color.FromArgb(unchecked((int)0xFFFF0000)),
                 Generator = entries =>
                 {
                     var actual = group
-                        .Where(e => e.IsGateway(GatewayLogCodes.Therm_TempSetpointChanged))
+                        .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Therm_TempSetpointChanged)
                         .Select(e => new TracePoint
                         {
                             X = e.TimeStamp,
@@ -71,7 +71,7 @@ namespace LogViewer.Mapping.Mappers
                         });
                     
                     var overwrite = group
-                        .Where(e => e.IsGateway(GatewayLogCodes.TempSetpointOverride))
+                        .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.TempSetpointOverride)
                         .Select(e => new TracePoint
                         {
                             X = e.TimeStamp,
@@ -97,7 +97,7 @@ namespace LogViewer.Mapping.Mappers
                 BaseColor = Color.FromArgb(unchecked((int)0xFFCC5A00)),
                 ToHumanReadable = d => d == 0.0 ? "Off" : "On",
                 Generator = _ => group
-                    .Where(e => e.IsGateway(GatewayLogCodes.Therm_HeatingRequestChanged))
+                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Therm_HeatingRequestChanged)
                     .Select(e => new TracePoint
                     {
                         X = e.TimeStamp,
@@ -118,7 +118,7 @@ namespace LogViewer.Mapping.Mappers
                 BaseColor = Color.FromArgb(unchecked((int)0xFF008FFF)),
                 ToHumanReadable = d => d == 0.0 ? "Off" : "On",
                 Generator = _ => group
-                    .Where(e => e.IsGateway(GatewayLogCodes.Therm_CoolingRequestChanged))
+                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Therm_CoolingRequestChanged)
                     .Select(e => new TracePoint
                     {
                         X = e.TimeStamp,
@@ -127,5 +127,5 @@ namespace LogViewer.Mapping.Mappers
             };
         }
     }
-
 }
+

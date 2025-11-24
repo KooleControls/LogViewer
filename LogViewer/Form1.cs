@@ -50,7 +50,10 @@ namespace LogViewer
                 new ThermostatMapper(),
                 new HvacMapper(),
                 new SmarthomeMapper(),
-                new UnknownMapper()
+                new GatewayGpioMapper(),
+
+
+                new UnknownMapper(),
             };
 
             _pipeline = new TracePipeline(mappers);

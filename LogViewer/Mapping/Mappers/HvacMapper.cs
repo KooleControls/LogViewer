@@ -39,7 +39,7 @@ namespace LogViewer.Mapping.Mappers
                 DrawOption = DrawOptions.None,
                 BaseColor = Color.FromArgb(unchecked((int)0xFFFFFF4D)),
                 Generator = _ => group
-                    .Where(e => e.IsGateway(GatewayLogCodes.Hvac_ActualTempChanged))
+                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Hvac_ActualTempChanged)
                     .Select(e => new TracePoint
                     {
                         X = e.TimeStamp,
@@ -59,7 +59,7 @@ namespace LogViewer.Mapping.Mappers
                 DrawOption = DrawOptions.None,
                 BaseColor = Color.FromArgb(unchecked((int)0xFFFF4D4D)),
                 Generator = _ => group
-                    .Where(e => e.IsGateway(GatewayLogCodes.Hvac_SetpointChanged))
+                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Hvac_SetpointChanged)
                     .Select(e => new TracePoint
                     {
                         X = e.TimeStamp,
@@ -90,7 +90,7 @@ namespace LogViewer.Mapping.Mappers
                 BaseColor = Color.FromArgb(unchecked((int)0xFFFF3D3D)),
                 ToHumanReadable = modeLookup,
                 Generator = _ => group
-                    .Where(e => e.IsGateway(GatewayLogCodes.Hvac_ModeChanged))
+                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Hvac_ModeChanged)
                     .Select(e => new TracePoint
                     {
                         X = e.TimeStamp,
@@ -111,7 +111,7 @@ namespace LogViewer.Mapping.Mappers
                 BaseColor = Color.FromArgb(unchecked((int)0xFFFF6F00)),
                 ToHumanReadable = d => d == 0.0 ? "Off" : "On",
                 Generator = _ => group
-                    .Where(e => e.IsGateway(GatewayLogCodes.Hvac_HeatingActiveChanged))
+                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Hvac_HeatingActiveChanged)
                     .Select(e => new TracePoint
                     {
                         X = e.TimeStamp,
@@ -132,7 +132,7 @@ namespace LogViewer.Mapping.Mappers
                 BaseColor = Color.FromArgb(unchecked((int)0xFF0074CC)),
                 ToHumanReadable = d => d == 0.0 ? "Off" : "On",
                 Generator = _ => group
-                    .Where(e => e.IsGateway(GatewayLogCodes.Hvac_CoolingActiveChanged))
+                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Hvac_CoolingActiveChanged)
                     .Select(e => new TracePoint
                     {
                         X = e.TimeStamp,
@@ -153,7 +153,7 @@ namespace LogViewer.Mapping.Mappers
                 BaseColor = Color.FromArgb(unchecked((int)0xFFFF3D3D)),
                 ToHumanReadable = d => d.ToString(),
                 Generator = _ => group
-                    .Where(e => e.IsGateway(GatewayLogCodes.Hvac_FaultCodeChanged))
+                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Hvac_FaultCodeChanged)
                     .Select(e => new TracePoint
                     {
                         X = e.TimeStamp,

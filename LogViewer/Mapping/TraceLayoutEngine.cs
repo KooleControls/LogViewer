@@ -25,7 +25,7 @@ namespace LogViewer.Mapping
                 foreach (var desc in group.OrderBy(d => d.Category))
                 {
 
-                    if (desc.DrawStyle == DrawStyles.Lines)
+                    if (desc.DrawStyle == DrawStyles.Lines || desc.DrawStyle == DrawStyles.NonInterpolatedLine)
                     {
                         result.Add(new AssignedTrace
                         {

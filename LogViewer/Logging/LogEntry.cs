@@ -1,12 +1,15 @@
 ﻿
 
+using KCObjectsStandard.Device.KC.Gateway.SmartHome;
 using LogViewer.Devices.Gateway;
+using System.Reflection.Metadata;
 
 namespace LogViewer.Logging
 {
     public class LogEntry
     {
         public DateTime TimeStamp { get; set; }
+        public SoftwareId SourceSoftwareId { get; set; }
         public DeviceType DeviceType { get; set; } = DeviceType.Unknown;
         public int DeviceId { get; set; }
         public UInt32 LogCode { get; set; }
@@ -14,33 +17,18 @@ namespace LogViewer.Logging
         public string? Metadata { get; set; }
         public double? Measurement { get; set; }
 
+        public GatewayLogCodes? AsGatewayLogCode()
+        {
+            return SourceSoftwareId == SoftwareId.Gateway_1245
+                ? (GatewayLogCodes?)LogCode
+                : null;
+        }
+
         public override string ToString()
         {
-            return $"{DeviceType}:{LogCode.ToString()}";
+            return AsGatewayLogCode()?.ToString() ?? $"{LogCode}";
         }
 
-        public bool Is<TEnum>(TEnum code) where TEnum : Enum
-        {
-            return LogCode == Convert.ToUInt32(code);
-        }
-
-        public bool IsGateway(GatewayLogCodes code)
-        {
-            if (!GatewayRoutedDevices.Contains(DeviceType))
-                return false;
-
-            return LogCode == (uint)code;
-        }
-
-
-        private static readonly DeviceType[] GatewayRoutedDevices =
-        {
-            DeviceType.Gateway_1245,
-            DeviceType.ExtentionModule_1246,
-            DeviceType.Thermostat,
-            DeviceType.HvacUnit,
-            DeviceType.Smarthome
-        };
     }
 }
 

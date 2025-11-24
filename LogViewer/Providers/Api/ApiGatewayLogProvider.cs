@@ -42,7 +42,7 @@ namespace LogViewer.Providers.API
 
             List<string> filters =
             [
-                $"Gateway.Id::{2390}",
+                $"Gateway.Id::{gatewayId}",
                 $"TimeStamp>:{from:s}",  // ISO 8601 format
                 $"TimeStamp<:{until:s}"  // ISO 8601 format
             ];

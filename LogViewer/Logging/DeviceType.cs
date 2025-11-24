@@ -3,10 +3,9 @@
     public enum DeviceType
     {
         Unknown,
-        Gateway_1245,
-        ExtentionModule_1246,
+        SmartHome,
         Thermostat,
         HvacUnit,
-        Smarthome,
+        Gateway,
     }
 }

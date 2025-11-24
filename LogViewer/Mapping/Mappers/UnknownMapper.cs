@@ -28,21 +28,22 @@ namespace LogViewer.Mapping.Mappers
             return _ =>
             {
                 return all
-                    .Where(e => !IsKnownCode(e.LogCode))
+                    .Where(e => !IsKnown(e))
                     .Select(e => new TracePoint
                     {
                         X = e.TimeStamp,
                         Y = 0,
-                        Label = $"{e.LogCode}",
+                        Label = $"{e.AsGatewayLogCode()?.ToString() ?? e.LogCode.ToString()}",
                     });
             };
         }
 
-        private bool IsKnownCode(object? code)
+        private bool IsKnown(LogEntry entry)
         {
-            if (code is not GatewayLogCodes gatewayCode)
-                return false;
-            return gatewayCode switch
+
+            var code = entry.AsGatewayLogCode();
+
+            return code switch
             {
                 GatewayLogCodes.Therm_TempActualChanged => true,
                 GatewayLogCodes.Therm_TempSetpointChanged => true,
@@ -57,6 +58,10 @@ namespace LogViewer.Mapping.Mappers
                 GatewayLogCodes.HeatmanagerStateChanged => true,
                 GatewayLogCodes.SmartHomeStateChanged => true,
                 GatewayLogCodes.CMN_ModbusError => true,
+                GatewayLogCodes.Relais1Changed => true,
+                GatewayLogCodes.Relais2Changed => true,
+                GatewayLogCodes.Input1Changed => true,
+                GatewayLogCodes.Input2Changed => true,
 
                 _ => false,
             };

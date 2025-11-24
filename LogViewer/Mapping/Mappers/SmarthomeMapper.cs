@@ -10,7 +10,7 @@ namespace LogViewer.Mapping.Mappers
         public IEnumerable<TraceDescriptor> Map(IEnumerable<LogEntry> entries)
         {
             var groups = entries
-                .Where(e => e.DeviceType == DeviceType.Smarthome)
+                .Where(e => e.DeviceType == DeviceType.SmartHome)
                 .GroupBy(e => e.DeviceId);
 
             foreach (var g in groups)
@@ -19,6 +19,7 @@ namespace LogViewer.Mapping.Mappers
 
                 yield return MapSmarthomeManager(g, id);
                 yield return MapHeatManager(g, id);
+                yield return MapModbusError(g, id);
 
             }
         }
@@ -37,7 +38,6 @@ namespace LogViewer.Mapping.Mappers
                 _ => "Unknown"
             };
 
-
             return new TraceDescriptor
             {
                 TraceId = $"SHM{id}_Smarthome",
@@ -48,7 +48,7 @@ namespace LogViewer.Mapping.Mappers
                 BaseColor = Color.FromArgb(unchecked((int)0xFF1FFF53)),
                 ToHumanReadable = stateLookup,
                 Generator = _ => group
-                    .Where(e => e.IsGateway(GatewayLogCodes.SmartHomeStateChanged))
+                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.SmartHomeStateChanged)
                     .Select(e => new TracePoint
                     {
                         X = e.TimeStamp,
@@ -82,7 +82,7 @@ namespace LogViewer.Mapping.Mappers
                 BaseColor = Color.FromArgb(unchecked((int)0xFF18CC43)),
                 ToHumanReadable = stateLookup,
                 Generator = _ => group
-                    .Where(e => e.IsGateway(GatewayLogCodes.SmartHomeStateChanged))
+                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.SmartHomeStateChanged)
                     .Select(e => new TracePoint
                     {
                         X = e.TimeStamp,
@@ -138,7 +138,7 @@ namespace LogViewer.Mapping.Mappers
                 BaseColor = Color.FromArgb(unchecked((int)0xFFFF0000)),
                 ToHumanReadable = errorLookup,
                 Generator = _ => group
-                    .Where(e => e.IsGateway(GatewayLogCodes.CMN_ModbusError))
+                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.CMN_ModbusError)
                     .Select(e => new TracePoint
                     {
                         X = e.TimeStamp,

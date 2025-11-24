@@ -26,6 +26,8 @@ namespace LogViewer.Devices.Gateway
                 TimeStamp = logItem.TimeStamp.Value,
                 LogCode = (UInt32)logCode,
                 RawData = logItem.Data,
+                SourceSoftwareId = SoftwareId.Gateway_1245,
+                DeviceId = 0,
             };
 
             ExpandLogEntry(logEntry, logCode, logItem.Data);
@@ -36,14 +38,7 @@ namespace LogViewer.Devices.Gateway
         {
             switch (logCode)
             {
-                case GatewayLogCodes.x02_MAIN_STARTED:
-                    logEntry.DeviceType = DeviceType.Gateway_1245;
-                    logEntry.DeviceId = 0;
-                    break;
-
                 case GatewayLogCodes.xB1_EXTPCB_REP_VERS:
-                    logEntry.DeviceType = DeviceType.ExtentionModule_1246;
-                    logEntry.DeviceId = 0;
                     logEntry.Metadata = Encoding.ASCII.GetString(data);
                     break;
                 case GatewayLogCodes.TempSetpointOverride:
@@ -63,7 +58,7 @@ namespace LogViewer.Devices.Gateway
 
                 case GatewayLogCodes.SmartHomeStateChanged:
                 case GatewayLogCodes.HeatmanagerStateChanged:
-                    logEntry.DeviceType = DeviceType.Smarthome;
+                    logEntry.DeviceType = DeviceType.SmartHome;
                     logEntry.DeviceId = 0;
                     logEntry.Measurement = data[4];
                     break;
@@ -72,13 +67,13 @@ namespace LogViewer.Devices.Gateway
                 case GatewayLogCodes.Input2Changed:
                 case GatewayLogCodes.Relais1Changed:
                 case GatewayLogCodes.Relais2Changed:
-                    logEntry.DeviceType = DeviceType.Gateway_1245;
+                    logEntry.DeviceType = DeviceType.Gateway;
                     logEntry.DeviceId = 0;
                     logEntry.Measurement = BitConverter.ToBoolean(data, 3) ? 1 : 0;
                     break;
 
                 case GatewayLogCodes.CMN_ModbusError:
-                    logEntry.DeviceType = DeviceType.Gateway_1245;
+                    logEntry.DeviceType = DeviceType.SmartHome;
                     logEntry.DeviceId = 0;
                     logEntry.Measurement = data[3];
                     break;
