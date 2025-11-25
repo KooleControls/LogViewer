@@ -1,16 +1,18 @@
-﻿namespace LogViewer.Mapping.Models
+﻿using FormsLib.Scope;
+
+namespace LogViewer.Mapping.Models
 {
     public class AssignedTrace
     {
-        public TraceDescriptor Descriptor { get; set; } = null!;
-        public double VerticalOffset { get; set; }
-        public double Scale { get; set; } = 10.0;
-        public string? Unit { get; set; }
-        public BuiltTrace? Built { get; set; }
-
-        public override string ToString()
+        public AssignedTrace(TraceDescriptor descriptor)
         {
-            return Descriptor.TraceId;
+            Descriptor = descriptor;
         }
+
+        public TraceDescriptor Descriptor { get; }
+        public Trace Trace { get; set; } = null!;
+        public ScopeController ScopeController { get; set; } = null!;
+
+        public override string ToString() => Descriptor.TraceId;
     }
 }

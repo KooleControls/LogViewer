@@ -1,4 +1,7 @@
-﻿namespace LogViewer.Mapping.Models
+﻿using LogViewer.Logging;
+using LogViewer.Mapping.Models;
+
+namespace LogViewer.Mapping.Models
 {
     public class TracePoint
     {

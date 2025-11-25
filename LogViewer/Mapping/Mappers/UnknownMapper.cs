@@ -1,5 +1,8 @@
-﻿using LogViewer.Devices.Gateway;
+﻿using FormsLib.Scope;
+using KCObjectsStandard.Data.CodeGeneration;
+using LogViewer.Devices.Gateway;
 using LogViewer.Logging;
+using LogViewer.Mapping.Interfaces;
 using LogViewer.Mapping.Models;
 using static FormsLib.Scope.Trace;
 
@@ -7,40 +10,30 @@ namespace LogViewer.Mapping.Mappers
 {
     public class UnknownMapper : ITraceMapper
     {
-        public IEnumerable<TraceDescriptor> Map(IEnumerable<LogEntry> entries)
+        public void Map(LogEntry entry, ITraceBuilder builder)
         {
-            return new[]
-            {
-                new TraceDescriptor
-                {
-                    TraceId = "Unknown",
-                    Category = "Unknown",
-                    EntityId = "Unknown",
-                    DrawStyle = DrawStyles.Cross,
-                    DrawOption = DrawOptions.DrawNames,
-                    Generator = UnknownGenerator(entries)
-                }
-            };
-        }
+            if (IsKnown(entry))
+                return;
 
-        private Func<IEnumerable<LogEntry>, IEnumerable<TracePoint>> UnknownGenerator(IEnumerable<LogEntry> all)
-        {
-            return _ =>
+            var descriptor = new TraceDescriptor
             {
-                return all
-                    .Where(e => !IsKnown(e))
-                    .Select(e => new TracePoint
-                    {
-                        X = e.TimeStamp,
-                        Y = 1f,
-                        Label = $"{e.AsGatewayLogCode()?.ToString() ?? e.LogCode.ToString()}",
-                    });
+                TraceId = "Unknown",
+                Category = "Unknown",
+                EntityId = "Unknown",
+                DrawStyle = DrawStyles.Cross,
+                DrawOption = DrawOptions.DrawNames,
+                BaseColor = Color.Wheat,
+                Source = nameof(UnknownMapper)
             };
+
+            var trace = builder.GetOrCreate(descriptor);
+            var label = new LinkedLabel(trace.Trace, entry.TimeStamp.Ticks, 1);
+            label.Text = $"{entry.AsGatewayLogCode()?.ToString() ?? entry.LogCode.ToString()}";
+            trace.ScopeController.Labels.Add(label);
         }
 
         private bool IsKnown(LogEntry entry)
         {
-
             var code = entry.AsGatewayLogCode();
 
             return code switch
@@ -62,10 +55,8 @@ namespace LogViewer.Mapping.Mappers
                 GatewayLogCodes.Relais2Changed => true,
                 GatewayLogCodes.Input1Changed => true,
                 GatewayLogCodes.Input2Changed => true,
-
                 _ => false,
             };
         }
     }
-
 }

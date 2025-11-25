@@ -6,6 +6,7 @@ using LogViewer.Config.Models;
 using LogViewer.Controls;
 using LogViewer.Logging;
 using LogViewer.Mapping;
+using LogViewer.Mapping.Interfaces;
 using LogViewer.Mapping.Mappers;
 using LogViewer.Mapping.Models;
 using LogViewer.Utils;
@@ -175,7 +176,7 @@ namespace LogViewer
         private void AppendLiveEntry(LogEntry entry)
         {
             appContext.LogCollection.Entries.Add(entry);
-            traceManager.LoadAll(appContext.LogCollection.Entries);
+            traceManager.Append(entry);
         }
 
         private void UpdateTitle()

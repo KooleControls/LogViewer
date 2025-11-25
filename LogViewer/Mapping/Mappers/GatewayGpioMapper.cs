@@ -1,5 +1,7 @@
-﻿using LogViewer.Devices.Gateway;
+﻿using FormsLib.Maths;
+using LogViewer.Devices.Gateway;
 using LogViewer.Logging;
+using LogViewer.Mapping.Interfaces;
 using LogViewer.Mapping.Models;
 using static FormsLib.Scope.Trace;
 
@@ -7,107 +9,71 @@ namespace LogViewer.Mapping.Mappers
 {
     public class GatewayGpioMapper : ITraceMapper
     {
-        public IEnumerable<TraceDescriptor> Map(IEnumerable<LogEntry> entries)
+        public void Map(LogEntry entry, ITraceBuilder builder)
         {
-            var groups = entries
-                .Where(e => e.DeviceType == DeviceType.Gateway)
-                .GroupBy(e => e.DeviceId);
+            if (entry.DeviceType != DeviceType.Gateway)
+                return;
 
-            foreach (var g in groups)
+            var code = entry.AsGatewayLogCode();
+            var id = entry.DeviceId;
+
+            switch (code)
             {
-                int id = g.Key;
-
-                yield return MapRelay_1(g, id);
-                yield return MapRelay_2(g, id);
-                yield return MapInput_1(g, id);
-                yield return MapInput_2(g, id);
+                case GatewayLogCodes.Relais1Changed:
+                    MapRelay(builder, entry, id, 1, GatewayLogCodes.Relais1Changed);
+                    break;
+                case GatewayLogCodes.Relais2Changed:
+                    MapRelay(builder, entry, id, 2, GatewayLogCodes.Relais2Changed);
+                    break;
+                case GatewayLogCodes.Input1Changed:
+                    MapInput(builder, entry, id, 1, GatewayLogCodes.Input1Changed);
+                    break;
+                case GatewayLogCodes.Input2Changed:
+                    MapInput(builder, entry, id, 2, GatewayLogCodes.Input2Changed);
+                    break;
             }
         }
 
-        private TraceDescriptor MapRelay_1(IEnumerable<LogEntry> group, int id)
+        private void MapRelay(ITraceBuilder builder, LogEntry entry, int id, int relayIndex, GatewayLogCodes expectedCode)
         {
-            return new TraceDescriptor
+            var descriptor = new TraceDescriptor
             {
-                TraceId = $"GIO{id}_Relay_1",
+                TraceId = $"GIO{id}_Relay_{relayIndex}",
                 Category = "State",
                 EntityId = $"GIO:{id}",
                 DrawStyle = DrawStyles.State,
-                DrawOption = DrawOptions.DrawNames,
+                DrawOption = DrawOptions.DrawNames | DrawOptions.ExtendEnd,
                 BaseColor = Color.FromArgb(unchecked((int)0xFF008FFF)),
                 ToHumanReadable = d => d == 0.0 ? "Off" : "On",
-                Generator = _ => group
-                    .Where(e => e.AsGatewayLogCode() == GatewayLogCodes.Relais1Changed)
-                    .Select(e => new TracePoint
-                    {
-                        X = e.TimeStamp,
-                        Y = e.Measurement ?? 0,
-                    })
+                Source = nameof(GatewayGpioMapper)
             };
+
+            var trace = builder.GetOrCreate(descriptor);
+
+            trace.Trace.Points.Add(new PointD(
+                entry.TimeStamp.Ticks,
+                entry.Measurement ?? 0));
         }
 
-        private TraceDescriptor MapRelay_2(IEnumerable<LogEntry> group, int id)
+        private void MapInput(ITraceBuilder builder, LogEntry entry, int id, int inputIndex, GatewayLogCodes expectedCode)
         {
-            return new TraceDescriptor
+            var descriptor = new TraceDescriptor
             {
-                TraceId = $"GIO{id}_Relay_2",
+                TraceId = $"GIO{id}_Input_{inputIndex}",
                 Category = "State",
                 EntityId = $"GIO:{id}",
                 DrawStyle = DrawStyles.State,
-                DrawOption = DrawOptions.DrawNames,
+                DrawOption = DrawOptions.DrawNames | DrawOptions.ExtendEnd,
                 BaseColor = Color.FromArgb(unchecked((int)0xFF008FFF)),
                 ToHumanReadable = d => d == 0.0 ? "Off" : "On",
-                Generator = _ => group
-                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Relais2Changed)
-                    .Select(e => new TracePoint
-                    {
-                        X = e.TimeStamp,
-                        Y = e.Measurement ?? 0,
-                    })
+                Source = nameof(GatewayGpioMapper)
             };
-        }
 
-        private TraceDescriptor MapInput_1(IEnumerable<LogEntry> group, int id)
-        {
-            return new TraceDescriptor
-            {
-                TraceId = $"GIO{id}_Input_1",
-                Category = "State",
-                EntityId = $"GIO:{id}",
-                DrawStyle = DrawStyles.State,
-                DrawOption = DrawOptions.DrawNames,
-                BaseColor = Color.FromArgb(unchecked((int)0xFF008FFF)),
-                ToHumanReadable = d => d == 0.0 ? "Off" : "On",
-                Generator = _ => group
-                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Input1Changed)
-                    .Select(e => new TracePoint
-                    {
-                        X = e.TimeStamp,
-                        Y = e.Measurement ?? 0,
-                    })
-            };
-        }
+            var trace = builder.GetOrCreate(descriptor);
 
-        private TraceDescriptor MapInput_2(IEnumerable<LogEntry> group, int id)
-        {
-            return new TraceDescriptor
-            {
-                TraceId = $"GIO{id}_Input_2",
-                Category = "State",
-                EntityId = $"GIO:{id}",
-                DrawStyle = DrawStyles.State,
-                DrawOption = DrawOptions.DrawNames,
-                BaseColor = Color.FromArgb(unchecked((int)0xFF008FFF)),
-                ToHumanReadable = d => d == 0.0 ? "Off" : "On",
-                Generator = _ => group
-                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Input2Changed)
-                    .Select(e => new TracePoint
-                    {
-                        X = e.TimeStamp,
-                        Y = e.Measurement ?? 0,
-                    })
-            };
+            trace.Trace.Points.Add(new PointD(
+                entry.TimeStamp.Ticks, 
+                entry.Measurement ?? 0));
         }
-
     }
 }
-

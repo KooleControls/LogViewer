@@ -1,34 +1,53 @@
 ﻿using FormsLib.Scope;
 using LogViewer.Logging;
-using LogViewer.Mapping.Models;
-using System;
+using LogViewer.Mapping.Interfaces;
 
 namespace LogViewer.Mapping
 {
     public class TraceManager
     {
         private readonly ScopeController _scope;
-        private readonly TracePipeline _pipeline;
-        private readonly ScopeControllerAdapter _adapter;
+        private readonly IReadOnlyList<ITraceMapper> _mappers;
+        private readonly TraceRegistry _registry;
 
-        public TraceManager(ScopeController scope, IEnumerable<ITraceMapper> mappers)
+        public TraceManager(
+            ScopeController scope,
+            IEnumerable<ITraceMapper> mappers)
         {
             _scope = scope;
-            _pipeline = new TracePipeline(mappers);
-            _adapter = new ScopeControllerAdapter(scope);
+            _mappers = mappers.ToList();
+            _registry = new TraceRegistry(_scope);
+        }
+
+        public void Clear()
+        {
+            _registry.Clear();
+            _scope.Traces.Clear();
+            _scope.Labels.Clear();
+            _scope.RedrawAll();
+        }
+
+        public void Append(LogEntry entry)
+        {
+            foreach (var mapper in _mappers)
+            {
+                mapper.Map(entry, _registry);
+            }
+
+            _scope.RedrawAll();
         }
 
         public void LoadAll(IEnumerable<LogEntry> entries)
         {
-            if (_pipeline == null || _adapter == null)
-                return;
+            Clear();
 
-            if (!entries.Any())
-                return;
-
-
-            var assigned = _pipeline.Run(entries);
-            _adapter.LoadAndReturnTraces(assigned, entries);
+            foreach (var entry in entries)
+            {
+                foreach (var mapper in _mappers)
+                {
+                    mapper.Map(entry, _registry);
+                }
+            }
             _scope.RedrawAll();
         }
     }

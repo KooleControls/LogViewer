@@ -1,36 +1,48 @@
-﻿using FormsLib.Design;
+﻿using FormsLib.Maths;
 using LogViewer.Devices.Gateway;
 using LogViewer.Logging;
+using LogViewer.Mapping.Interfaces;
 using LogViewer.Mapping.Models;
 using static FormsLib.Scope.Trace;
 
 namespace LogViewer.Mapping.Mappers
 {
-
     public class HvacMapper : ITraceMapper
     {
-        public IEnumerable<TraceDescriptor> Map(IEnumerable<LogEntry> entries)
+        public void Map(LogEntry entry, ITraceBuilder builder)
         {
-            var groups = entries
-                .Where(e => e.DeviceType == DeviceType.HvacUnit)
-                .GroupBy(e => e.DeviceId);
+            if (entry.DeviceType != DeviceType.HvacUnit)
+                return;
 
-            foreach (var g in groups)
+            var id = entry.DeviceId;
+            var code = entry.AsGatewayLogCode();
+
+            switch (code)
             {
-                int id = g.Key;
-
-                yield return MapActualTemp(g, id);
-                yield return MapSetpoint(g, id);
-                yield return MapMode(g, id);
-                yield return MapHeatingActive(g, id);
-                yield return MapCoolingActive(g, id);
-                yield return MapFaultCode(g, id);
+                case GatewayLogCodes.Hvac_ActualTempChanged:
+                    MapActualTemp(builder, entry, id);
+                    break;
+                case GatewayLogCodes.Hvac_SetpointChanged:
+                    MapSetpoint(builder, entry, id);
+                    break;
+                case GatewayLogCodes.Hvac_ModeChanged:
+                    MapMode(builder, entry, id);
+                    break;
+                case GatewayLogCodes.Hvac_HeatingActiveChanged:
+                    MapHeatingActive(builder, entry, id);
+                    break;
+                case GatewayLogCodes.Hvac_CoolingActiveChanged:
+                    MapCoolingActive(builder, entry, id);
+                    break;
+                case GatewayLogCodes.Hvac_FaultCodeChanged:
+                    MapFaultCode(builder, entry, id);
+                    break;
             }
         }
 
-        private TraceDescriptor MapActualTemp(IEnumerable<LogEntry> group, int id)
+        private void MapActualTemp(ITraceBuilder builder, LogEntry entry, int id)
         {
-            return new TraceDescriptor
+            var descriptor = new TraceDescriptor
             {
                 TraceId = $"HVAC{id}_TempActual",
                 Category = "Temperature",
@@ -38,37 +50,35 @@ namespace LogViewer.Mapping.Mappers
                 DrawStyle = DrawStyles.Lines,
                 DrawOption = DrawOptions.None,
                 BaseColor = Color.FromArgb(unchecked((int)0xFFFFFF4D)),
-                Generator = _ => group
-                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Hvac_ActualTempChanged)
-                    .Select(e => new TracePoint
-                    {
-                        X = e.TimeStamp,
-                        Y = Convert.ToDouble(e.Measurement)
-                    })
+                Source = nameof(HvacMapper)
             };
+
+            var trace = builder.GetOrCreate(descriptor);
+            trace.Trace.Points.Add(new PointD(
+                entry.TimeStamp.Ticks,
+                entry.Measurement ?? 0));
         }
 
-        private TraceDescriptor MapSetpoint(IEnumerable<LogEntry> group, int id)
+        private void MapSetpoint(ITraceBuilder builder, LogEntry entry, int id)
         {
-            return new TraceDescriptor
+            var descriptor = new TraceDescriptor
             {
                 TraceId = $"HVAC{id}_Setpoint",
                 Category = "Setpoint",
                 EntityId = $"HVAC:{id}",
-                DrawStyle = DrawStyles.Lines,
-                DrawOption = DrawOptions.None,
+                DrawStyle = DrawStyles.NonInterpolatedLine,
+                DrawOption = DrawOptions.None | DrawOptions.ExtendEnd,
                 BaseColor = Color.FromArgb(unchecked((int)0xFFFF4D4D)),
-                Generator = _ => group
-                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Hvac_SetpointChanged)
-                    .Select(e => new TracePoint
-                    {
-                        X = e.TimeStamp,
-                        Y = Convert.ToDouble(e.Measurement)
-                    })
+                Source = nameof(HvacMapper)
             };
+
+            var trace = builder.GetOrCreate(descriptor);
+            trace.Trace.Points.Add(new PointD(
+                entry.TimeStamp.Ticks,
+                entry.Measurement ?? 0));
         }
 
-        private TraceDescriptor MapMode(IEnumerable<LogEntry> group, int id)
+        private void MapMode(ITraceBuilder builder, LogEntry entry, int id)
         {
             var modeLookup = (double mode) => mode switch
             {
@@ -79,87 +89,82 @@ namespace LogViewer.Mapping.Mappers
                 _ => "Unknown"
             };
 
-
-            return new TraceDescriptor
+            var descriptor = new TraceDescriptor
             {
                 TraceId = $"HVAC{id}_Mode",
                 Category = "State",
                 EntityId = $"HVAC:{id}",
                 DrawStyle = DrawStyles.State,
-                DrawOption = DrawOptions.DrawNames,
+                DrawOption = DrawOptions.DrawNames | DrawOptions.ExtendEnd,
                 BaseColor = Color.FromArgb(unchecked((int)0xFFFF3D3D)),
                 ToHumanReadable = modeLookup,
-                Generator = _ => group
-                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Hvac_ModeChanged)
-                    .Select(e => new TracePoint
-                    {
-                        X = e.TimeStamp,
-                        Y = Convert.ToDouble(e.Measurement)
-                    })
+                Source = nameof(HvacMapper)
             };
+
+            var trace = builder.GetOrCreate(descriptor);
+            trace.Trace.Points.Add(new PointD(
+                entry.TimeStamp.Ticks,
+                entry.Measurement ?? 0));
         }
 
-        private TraceDescriptor MapHeatingActive(IEnumerable<LogEntry> group, int id)
+        private void MapHeatingActive(ITraceBuilder builder, LogEntry entry, int id)
         {
-            return new TraceDescriptor
+            var descriptor = new TraceDescriptor
             {
                 TraceId = $"HVAC{id}_HeatingActive",
                 Category = "State",
                 EntityId = $"HVAC:{id}",
                 DrawStyle = DrawStyles.State,
-                DrawOption = DrawOptions.DrawNames,
+                DrawOption = DrawOptions.DrawNames | DrawOptions.ExtendEnd,
                 BaseColor = Color.FromArgb(unchecked((int)0xFFFF6F00)),
                 ToHumanReadable = d => d == 0.0 ? "Off" : "On",
-                Generator = _ => group
-                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Hvac_HeatingActiveChanged)
-                    .Select(e => new TracePoint
-                    {
-                        X = e.TimeStamp,
-                        Y = Convert.ToBoolean(e.Measurement) ? 1 : 0
-                    })
+                Source = nameof(HvacMapper)
             };
+
+            var trace = builder.GetOrCreate(descriptor);
+            trace.Trace.Points.Add(new PointD(
+                entry.TimeStamp.Ticks,
+                entry.Measurement ?? 0));
         }
 
-        private TraceDescriptor MapCoolingActive(IEnumerable<LogEntry> group, int id)
+        private void MapCoolingActive(ITraceBuilder builder, LogEntry entry, int id)
         {
-            return new TraceDescriptor
+            var descriptor = new TraceDescriptor
             {
                 TraceId = $"HVAC{id}_CoolingActive",
                 Category = "State",
                 EntityId = $"HVAC:{id}",
                 DrawStyle = DrawStyles.State,
-                DrawOption = DrawOptions.DrawNames,
+                DrawOption = DrawOptions.DrawNames | DrawOptions.ExtendEnd,
                 BaseColor = Color.FromArgb(unchecked((int)0xFF0074CC)),
                 ToHumanReadable = d => d == 0.0 ? "Off" : "On",
-                Generator = _ => group
-                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Hvac_CoolingActiveChanged)
-                    .Select(e => new TracePoint
-                    {
-                        X = e.TimeStamp,
-                        Y = Convert.ToBoolean(e.Measurement) ? -1 : 0
-                    })
+                Source = nameof(HvacMapper)
             };
+
+            var trace = builder.GetOrCreate(descriptor);
+            trace.Trace.Points.Add(new PointD(
+                entry.TimeStamp.Ticks,
+                entry.Measurement ?? 0));
         }
 
-        private TraceDescriptor MapFaultCode(IEnumerable<LogEntry> group, int id)
+        private void MapFaultCode(ITraceBuilder builder, LogEntry entry, int id)
         {
-            return new TraceDescriptor
+            var descriptor = new TraceDescriptor
             {
                 TraceId = $"HVAC{id}_FaultCode",
                 Category = "Debug",
                 EntityId = $"HVAC:{id}",
                 DrawStyle = DrawStyles.State,
-                DrawOption = DrawOptions.DrawNames,
+                DrawOption = DrawOptions.DrawNames | DrawOptions.ExtendEnd,
                 BaseColor = Color.FromArgb(unchecked((int)0xFFFF3D3D)),
                 ToHumanReadable = d => d.ToString(),
-                Generator = _ => group
-                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Hvac_FaultCodeChanged)
-                    .Select(e => new TracePoint
-                    {
-                        X = e.TimeStamp,
-                        Y = Convert.ToDouble(e.Measurement) // direct numeric code
-                    })
+                Source = nameof(HvacMapper)
             };
+
+            var trace = builder.GetOrCreate(descriptor);
+            trace.Trace.Points.Add(new PointD(
+                entry.TimeStamp.Ticks,
+                entry.Measurement ?? 0));
         }
     }
 }

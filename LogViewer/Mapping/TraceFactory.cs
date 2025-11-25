@@ -1,52 +1,42 @@
-﻿using FormsLib.Design;
-using FormsLib.Maths;
+﻿using FormsLib.Maths;
 using FormsLib.Scope;
-using LogViewer.Logging;
 using LogViewer.Mapping.Models;
+using static DevExpress.Data.Filtering.Helpers.SubExprHelper.ThreadHoppingFiltering;
 
 namespace LogViewer.Mapping
 {
-
     public class TraceFactory
     {
-        public BuiltTrace CreateTrace(AssignedTrace assigned, IEnumerable<LogEntry> entries)
+        private readonly ScopeController _scope;
+        public TraceFactory(ScopeController scope)
         {
-            var built = new BuiltTrace();
-
-            var trace = new Trace
-            {
-                Name = assigned.Descriptor.TraceId,
-                Offset = assigned.VerticalOffset,
-                Scale = assigned.Scale,
-                Unit = assigned.Unit ?? "",
-                Color = assigned.Descriptor.BaseColor,
-                DrawStyle = assigned.Descriptor.DrawStyle,
-                DrawOption = assigned.Descriptor.DrawOption,
-                ToHumanReadable = assigned.Descriptor.ToHumanReadable,
-            };
-
-            built.Trace = trace;
-
-            foreach (var pt in assigned.Descriptor.Generator(entries))
-            {
-                if (string.IsNullOrEmpty(pt.Label))
-                {
-                    trace.Points.Add(new PointD(pt.X.Ticks, pt.Y));
-                }
-                else
-                {
-                    var label = new LinkedLabel(trace)
-                    {
-                        Point = new PointD(pt.X.Ticks, pt.Y),
-                        Text = pt.Label,
-                    };
-
-                    built.Labels.Add(label);
-                }
-            }
-
-            return built;
+            _scope = scope;
         }
 
+        public AssignedTrace CreateTrace(TraceDescriptor descriptor)
+        {
+            AssignedTrace assigned = new(descriptor);
+            assigned.Trace = MakeScopeTrace(descriptor);
+            assigned.ScopeController = _scope;
+            _scope.Traces.Add(assigned.Trace);
+            return assigned;
+        }
+
+
+        private Trace MakeScopeTrace(TraceDescriptor descriptor)
+        {
+            var trace = new Trace
+            {
+                Name = descriptor.TraceId,
+                Tag = descriptor.EntityId,
+                Color = descriptor.BaseColor,
+                DrawStyle = descriptor.DrawStyle,
+                DrawOption = descriptor.DrawOption,
+                ToHumanReadable = descriptor.ToHumanReadable,
+                Scale = 10.0f,
+                Offset = 0.0f
+            };
+            return trace;
+        }
     }
 }

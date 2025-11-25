@@ -1,5 +1,7 @@
-﻿using LogViewer.Devices.Gateway;
+﻿using FormsLib.Maths;
+using LogViewer.Devices.Gateway;
 using LogViewer.Logging;
+using LogViewer.Mapping.Interfaces;
 using LogViewer.Mapping.Models;
 using static FormsLib.Scope.Trace;
 
@@ -7,24 +9,28 @@ namespace LogViewer.Mapping.Mappers
 {
     public class SmarthomeMapper : ITraceMapper
     {
-        public IEnumerable<TraceDescriptor> Map(IEnumerable<LogEntry> entries)
+        public void Map(LogEntry entry, ITraceBuilder builder)
         {
-            var groups = entries
-                .Where(e => e.DeviceType == DeviceType.SmartHome)
-                .GroupBy(e => e.DeviceId);
+            if (entry.DeviceType != DeviceType.SmartHome)
+                return;
 
-            foreach (var g in groups)
+            var id = entry.DeviceId;
+            var code = entry.AsGatewayLogCode();
+
+            switch (code)
             {
-                int id = g.Key;
+                case GatewayLogCodes.SmartHomeStateChanged:
+                    MapSmarthomeManager(builder, entry, id);
+                    MapHeatManager(builder, entry, id);
+                    break;
 
-                yield return MapSmarthomeManager(g, id);
-                yield return MapHeatManager(g, id);
-                yield return MapModbusError(g, id);
-
+                case GatewayLogCodes.CMN_ModbusError:
+                    MapModbusError(builder, entry, id);
+                    break;
             }
         }
 
-        private TraceDescriptor MapSmarthomeManager(IEnumerable<LogEntry> group, int id)
+        private void MapSmarthomeManager(ITraceBuilder builder, LogEntry entry, int id)
         {
             var stateLookup = (double mode) => mode switch
             {
@@ -38,28 +44,25 @@ namespace LogViewer.Mapping.Mappers
                 _ => "Unknown"
             };
 
-            return new TraceDescriptor
+            var descriptor = new TraceDescriptor
             {
                 TraceId = $"SHM{id}_Smarthome",
                 Category = "State",
                 EntityId = $"SHM:{id}",
                 DrawStyle = DrawStyles.State,
-                DrawOption = DrawOptions.DrawNames,
+                DrawOption = DrawOptions.DrawNames | DrawOptions.ExtendEnd,
                 BaseColor = Color.FromArgb(unchecked((int)0xFF1FFF53)),
                 ToHumanReadable = stateLookup,
-                Generator = _ => group
-                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.SmartHomeStateChanged)
-                    .Select(e => new TracePoint
-                    {
-                        X = e.TimeStamp,
-                        Y = Convert.ToDouble(e.Measurement)
-                    })
+                Source = nameof(SmarthomeMapper)
             };
+
+            var trace = builder.GetOrCreate(descriptor);
+            trace.Trace.Points.Add(new PointD(
+                entry.TimeStamp.Ticks,
+                entry.Measurement ?? 0));
         }
 
-
-
-        private TraceDescriptor MapHeatManager(IEnumerable<LogEntry> group, int id)
+        private void MapHeatManager(ITraceBuilder builder, LogEntry entry, int id)
         {
             var stateLookup = (double mode) => mode switch
             {
@@ -72,26 +75,25 @@ namespace LogViewer.Mapping.Mappers
                 _ => "Unknown"
             };
 
-            return new TraceDescriptor
+            var descriptor = new TraceDescriptor
             {
                 TraceId = $"SHM{id}_HeatMan",
                 Category = "State",
                 EntityId = $"SHM:{id}",
                 DrawStyle = DrawStyles.State,
-                DrawOption = DrawOptions.DrawNames,
+                DrawOption = DrawOptions.DrawNames | DrawOptions.ExtendEnd,
                 BaseColor = Color.FromArgb(unchecked((int)0xFF18CC43)),
                 ToHumanReadable = stateLookup,
-                Generator = _ => group
-                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.SmartHomeStateChanged)
-                    .Select(e => new TracePoint
-                    {
-                        X = e.TimeStamp,
-                        Y = Convert.ToDouble(e.Measurement)
-                    })
+                Source = nameof(SmarthomeMapper)
             };
+
+            var trace = builder.GetOrCreate(descriptor);
+            trace.Trace.Points.Add(new PointD(
+                entry.TimeStamp.Ticks,
+                entry.Measurement ?? 0));
         }
 
-        public TraceDescriptor MapModbusError(IEnumerable<LogEntry> group, int id)
+        private void MapModbusError(ITraceBuilder builder, LogEntry entry, int id)
         {
             var errorLookup = (double code) => code switch
             {
@@ -127,25 +129,22 @@ namespace LogViewer.Mapping.Mappers
                 _ => "Unknown"
             };
 
-
-            return new TraceDescriptor
+            var descriptor = new TraceDescriptor
             {
                 TraceId = $"SHM{id}_ModbusError",
                 Category = "Modbus Errors",
                 EntityId = $"SHM:{id}",
                 DrawStyle = DrawStyles.State,
-                DrawOption = DrawOptions.DrawNames,
+                DrawOption = DrawOptions.DrawNames | DrawOptions.ExtendEnd,
                 BaseColor = Color.FromArgb(unchecked((int)0xFFFF0000)),
                 ToHumanReadable = errorLookup,
-                Generator = _ => group
-                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.CMN_ModbusError)
-                    .Select(e => new TracePoint
-                    {
-                        X = e.TimeStamp,
-                        Y = Convert.ToDouble(e.Measurement)
-                    })
+                Source = nameof(SmarthomeMapper)
             };
+
+            var trace = builder.GetOrCreate(descriptor);
+            trace.Trace.Points.Add(new PointD(
+                entry.TimeStamp.Ticks,
+                entry.Measurement ?? 0));
         }
     }
 }
-

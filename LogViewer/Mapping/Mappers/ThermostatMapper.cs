@@ -1,34 +1,45 @@
-﻿using FormsLib.Scope;
+﻿using FormsLib.Maths;
+using FormsLib.Scope;
 using LogViewer.Devices.Gateway;
 using LogViewer.Logging;
+using LogViewer.Mapping.Interfaces;
 using LogViewer.Mapping.Models;
+using Microsoft.CodeAnalysis.CSharp;
 using static FormsLib.Scope.Trace;
 
 namespace LogViewer.Mapping.Mappers
 {
     public class ThermostatMapper : ITraceMapper
     {
-        public IEnumerable<TraceDescriptor> Map(IEnumerable<LogEntry> entries)
+        public void Map(LogEntry entry, ITraceBuilder builder)
         {
-            var groups = entries
-                .Where(e => e.DeviceType == DeviceType.Thermostat)
-                .GroupBy(e => e.DeviceId);
+            if (entry.DeviceType != DeviceType.Thermostat)
+                return;
 
-            foreach (var g in groups)
+            var id = entry.DeviceId;
+            var code = entry.AsGatewayLogCode();
+
+            switch (code)
             {
-                int id = g.Key;
-
-                yield return MapActualTemperature(g, id);
-                yield return MapSetpointTemperature(g, id);
-                yield return MapHeatingRequest(g, id);
-                yield return MapCoolingRequest(g, id);
-
+                case GatewayLogCodes.Therm_TempActualChanged:
+                    MapActualTemperature(builder, entry, id);
+                    break;
+                case GatewayLogCodes.Therm_TempSetpointChanged:
+                case GatewayLogCodes.TempSetpointOverride:
+                    MapSetpointTemperature(builder, entry, id, code);
+                    break;
+                case GatewayLogCodes.Therm_HeatingRequestChanged:
+                    MapHeatingRequest(builder, entry, id);
+                    break;
+                case GatewayLogCodes.Therm_CoolingRequestChanged:
+                    MapCoolingRequest(builder, entry, id);
+                    break;
             }
         }
 
-        private TraceDescriptor MapActualTemperature(IEnumerable<LogEntry> group, int id)
+        private void MapActualTemperature(ITraceBuilder builder, LogEntry entry, int id)
         {
-            return new TraceDescriptor
+            var descriptor = new TraceDescriptor
             {
                 TraceId = $"THR{id}_TempActual",
                 Category = "Temperature",
@@ -36,96 +47,81 @@ namespace LogViewer.Mapping.Mappers
                 DrawStyle = DrawStyles.Lines,
                 DrawOption = DrawOptions.None,
                 BaseColor = Color.FromArgb(unchecked((int)0xFFFFFF00)),
-                Generator = entries =>
-                {
-                    var actual = group
-                        .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Therm_TempActualChanged)
-                        .Select(e => new TracePoint
-                        {
-                            X = e.TimeStamp,
-                            Y = e.Measurement ?? 0,
-                        });
-                    return actual;
-                }
+                Source = nameof(ThermostatMapper)
             };
+
+            var trace = builder.GetOrCreate(descriptor);
+            trace.Trace.Points.Add(new PointD(
+                entry.TimeStamp.Ticks,
+                entry.Measurement ?? 0));
         }
 
-        private TraceDescriptor MapSetpointTemperature(IEnumerable<LogEntry> group, int id)
+        private void MapSetpointTemperature(ITraceBuilder builder, LogEntry entry, int id, GatewayLogCodes? code)
         {
-            return new TraceDescriptor
+            var descriptor = new TraceDescriptor
             {
                 TraceId = $"THR{id}_TempSetpoint",
                 Category = "Setpoint",
                 EntityId = $"THR:{id}",
                 DrawStyle = DrawStyles.NonInterpolatedLine,
-                DrawOption = DrawOptions.None,
+                DrawOption = DrawOptions.None | DrawOptions.ExtendEnd,
                 BaseColor = Color.FromArgb(unchecked((int)0xFFFF0000)),
-                Generator = entries =>
-                {
-                    var actual = group
-                        .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Therm_TempSetpointChanged)
-                        .Select(e => new TracePoint
-                        {
-                            X = e.TimeStamp,
-                            Y = e.Measurement ?? 0,
-                        });
-                    
-                    var overwrite = group
-                        .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.TempSetpointOverride)
-                        .Select(e => new TracePoint
-                        {
-                            X = e.TimeStamp,
-                            Y = e.Measurement ?? 0,
-                            Label = "OVE"
-                        });
-
-                    return actual.Concat(overwrite).OrderBy(p => p.X);
-                }
-
+                Source = nameof(ThermostatMapper)
             };
+
+            var trace = builder.GetOrCreate(descriptor);
+            if (code == GatewayLogCodes.TempSetpointOverride)
+            {
+                var label = new LinkedLabel(trace.Trace, entry.TimeStamp.Ticks, entry.Measurement ?? 0);
+                label.Text = "OVE";
+                trace.ScopeController.Labels.Add(label);
+            }
+
+            trace.Trace.Points.Add(new PointD(
+                entry.TimeStamp.Ticks,
+                entry.Measurement ?? 0));
+
+            // Note: ordering by X is handled later (TraceFactory uses OrderBy on Points)
         }
 
-        private TraceDescriptor MapHeatingRequest(IEnumerable<LogEntry> group, int id)
+        private void MapHeatingRequest(ITraceBuilder builder, LogEntry entry, int id)
         {
-            return new TraceDescriptor
+            var descriptor = new TraceDescriptor
             {
                 TraceId = $"THR{id}_HeatingReq",
                 Category = "State",
                 EntityId = $"THR:{id}",
                 DrawStyle = DrawStyles.State,
-                DrawOption = DrawOptions.DrawNames,
+                DrawOption = DrawOptions.DrawNames | DrawOptions.ExtendEnd,
                 BaseColor = Color.FromArgb(unchecked((int)0xFFCC5A00)),
                 ToHumanReadable = d => d == 0.0 ? "Off" : "On",
-                Generator = _ => group
-                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Therm_HeatingRequestChanged)
-                    .Select(e => new TracePoint
-                    {
-                        X = e.TimeStamp,
-                        Y = e.Measurement ?? 0,
-                    })
+                Source = nameof(ThermostatMapper)
             };
+
+            var trace = builder.GetOrCreate(descriptor);
+            trace.Trace.Points.Add(new PointD(
+                entry.TimeStamp.Ticks,
+                entry.Measurement ?? 0));
         }
 
-        private TraceDescriptor MapCoolingRequest(IEnumerable<LogEntry> group, int id)
+        private void MapCoolingRequest(ITraceBuilder builder, LogEntry entry, int id)
         {
-            return new TraceDescriptor
+            var descriptor = new TraceDescriptor
             {
                 TraceId = $"THR{id}_CoolingReq",
                 Category = "State",
                 EntityId = $"THR:{id}",
                 DrawStyle = DrawStyles.State,
-                DrawOption = DrawOptions.DrawNames,
+                DrawOption = DrawOptions.DrawNames | DrawOptions.ExtendEnd,
                 BaseColor = Color.FromArgb(unchecked((int)0xFF008FFF)),
                 ToHumanReadable = d => d == 0.0 ? "Off" : "On",
-                Generator = _ => group
-                    .Where(e => e.AsGatewayLogCode() ==GatewayLogCodes.Therm_CoolingRequestChanged)
-                    .Select(e => new TracePoint
-                    {
-                        X = e.TimeStamp,
-                        Y = e.Measurement ?? 0,
-                    })
+                Source = nameof(ThermostatMapper)
             };
+
+            var trace = builder.GetOrCreate(descriptor);
+            trace.Trace.Points.Add(new PointD(
+                entry.TimeStamp.Ticks,
+                entry.Measurement ?? 0));
         }
     }
 }
-
