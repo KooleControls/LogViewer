@@ -17,7 +17,7 @@ namespace LogViewer.Mapping.Mappers
                     Category = "Unknown",
                     EntityId = "Unknown",
                     DrawStyle = DrawStyles.Cross,
-                    DrawOption = DrawOptions.None,
+                    DrawOption = DrawOptions.DrawNames,
                     Generator = UnknownGenerator(entries)
                 }
             };
@@ -32,7 +32,7 @@ namespace LogViewer.Mapping.Mappers
                     .Select(e => new TracePoint
                     {
                         X = e.TimeStamp,
-                        Y = 0,
+                        Y = 1f,
                         Label = $"{e.AsGatewayLogCode()?.ToString() ?? e.LogCode.ToString()}",
                     });
             };

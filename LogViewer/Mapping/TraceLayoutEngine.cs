@@ -11,7 +11,7 @@ namespace LogViewer.Mapping
         public IEnumerable<AssignedTrace> Layout(IEnumerable<TraceDescriptor> descriptors)
         {
             var result = new List<AssignedTrace>();
-            double offset = -3.0f;
+            double offset = 5f;
 
             // group by entity: Gateway, IU:1, IU:2...
             var groups = descriptors
@@ -34,6 +34,15 @@ namespace LogViewer.Mapping
                         });
                     }
                     else if (desc.DrawStyle == DrawStyles.State)
+                    {
+                        result.Add(new AssignedTrace
+                        {
+                            Descriptor = desc,
+                            VerticalOffset = offset,
+                        });
+                        offset += OffsetStep;
+                    }
+                    else if (desc.DrawStyle == DrawStyles.Cross)
                     {
                         result.Add(new AssignedTrace
                         {
