@@ -166,13 +166,16 @@ namespace LogViewer
 
         private void UpdateLogView()
         {
+            scopeController.Settings.SetHorizontal(
+                appContext.ScopeViewContext.StartDate,
+                appContext.ScopeViewContext.EndDate);
             traceManager.LoadAll(appContext.LogCollection.Entries);
         }
 
         private void AppendLiveEntry(LogEntry entry)
         {
             appContext.LogCollection.Entries.Add(entry);
-            traceManager.Append(entry);
+            traceManager.LoadAll(appContext.LogCollection.Entries);
         }
 
         private void UpdateTitle()

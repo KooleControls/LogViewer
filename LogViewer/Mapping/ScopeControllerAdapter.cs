@@ -1,33 +1,40 @@
 ﻿using FormsLib.Scope;
 using LogViewer.Logging;
+using LogViewer.Mapping;
 using LogViewer.Mapping.Models;
 
-namespace LogViewer.Mapping
+public class ScopeControllerAdapter
 {
-    public class ScopeControllerAdapter
+    private readonly ScopeController _scope;
+    private readonly TraceFactory _factory = new TraceFactory();
+
+    public ScopeControllerAdapter(ScopeController scope)
     {
-        private readonly ScopeController _scope;
+        _scope = scope;
+    }
 
-        public ScopeControllerAdapter(ScopeController scope)
+    public List<AssignedTrace> LoadAndReturnTraces(
+        IEnumerable<AssignedTrace> assignedTraces,
+        IEnumerable<LogEntry> entries)
+    {
+        _scope.Traces.Clear();
+        _scope.Labels.Clear();
+
+        var result = new List<AssignedTrace>();
+
+        foreach (var assigned in assignedTraces)
         {
-            _scope = scope;
+            var built = _factory.CreateTrace(assigned, entries);
+
+            assigned.Built = built;
+
+            _scope.Traces.Add(built.Trace);
+            foreach (var label in built.Labels)
+                _scope.Labels.Add(label);
+
+            result.Add(assigned);
         }
 
-        public void Load(IEnumerable<AssignedTrace> assignedTraces, IEnumerable<LogEntry> entries)
-        {
-            _scope.Traces.Clear();
-            _scope.Labels.Clear();
-
-            var factory = new TraceFactory();
-
-            foreach (var assigned in assignedTraces)
-            {
-                var built = factory.CreateTrace(assigned, entries);
-                _scope.Traces.Add(built.Trace);
-
-                foreach (var label in built.Labels)
-                    _scope.Labels.Add(label);
-            }
-        }
+        return result;
     }
 }
