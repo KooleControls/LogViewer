@@ -2,6 +2,7 @@ using FormsLib;
 using LogViewer.Config.Helpers;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace LogViewer
 {

@@ -1,12 +1,15 @@
-using FormsLib.Extentions;
+﻿using FormsLib.Extentions;
 using FormsLib.Scope;
 using LogViewer.AppContext;
 using LogViewer.Config;
 using LogViewer.Config.Models;
+using LogViewer.Controls;
+using LogViewer.Logging;
 using LogViewer.Mapping;
 using LogViewer.Mapping.Mappers;
 using LogViewer.Mapping.Models;
 using LogViewer.Utils;
+using System;
 using System.Reflection;
 
 namespace LogViewer
@@ -16,55 +19,60 @@ namespace LogViewer
         private readonly LogViewerContext appContext;
         private readonly ScopeController scopeController;
         private readonly ConfigurationService configurationService;
-        private TracePipeline? _pipeline;
-        private ScopeControllerAdapter? _adapter;
+        private readonly ApiSourceControl apiSourceControl1;
+        private readonly TraceManager traceManager;
 
         public Form1()
         {
             InitializeComponent();
 
-            // Initialize application context and profile
             configurationService = new ConfigurationService();
             appContext = new LogViewerContext();
 
-            // Initialize and configure scope controller
+            // Scope controller
             scopeController = new ScopeController();
             scopeController.Settings.ApplySettings(AppScopeStyles.GetDarkScope());
 
-            // Set up data sources for views
             scopeView1.DataSource = scopeController;
             markerView1.DataSource = scopeController;
             traceView1.DataSource = scopeController;
 
-            // Configure data source and event handler for source selection control
+            scopeController.Settings.SetHorizontal(
+                DateTime.Now.Date + TimeSpan.FromHours(7),
+                DateTime.Now.Date + TimeSpan.FromHours(18));
+            scopeController.RedrawAll();
+
+            // API source control
+            apiSourceControl1 = new ApiSourceControl();
+            tabPageApi.Controls.Add(apiSourceControl1);
+            apiSourceControl1.Dock = DockStyle.Fill;
             apiSourceControl1.DataSource = appContext;
+
+            // API change → full rebuild
             apiSourceControl1.OnDataChanged += (s, e) => UpdateLogView();
 
+            // MQTT → incremental update
+            mqttSourceControl1.OnLogReceived += (s, entry) => AppendLiveEntry(entry);
 
-
-            // Set up the menu items and update the window title
-            UpdateTitle();
-
+            // Mappers
             var mappers = new List<ITraceMapper>
             {
                 new ThermostatMapper(),
                 new HvacMapper(),
                 new SmarthomeMapper(),
                 new GatewayGpioMapper(),
-
-
                 new UnknownMapper(),
             };
 
-            _pipeline = new TracePipeline(mappers);
-            _adapter = new ScopeControllerAdapter(scopeController);
+            traceManager = new TraceManager(scopeController, mappers);
 
-            // Load configuration settings
             this.Load += Form1_Load;
 
 #if RELEASE
             this.Size = new Size(1280, 720);
 #endif
+
+            UpdateTitle();
         }
 
         private async void Form1_Load(object? sender, EventArgs e)
@@ -158,18 +166,13 @@ namespace LogViewer
 
         private void UpdateLogView()
         {
-            if (_pipeline == null || _adapter == null)
-                return;
+            traceManager.LoadAll(appContext.LogCollection.Entries);
+        }
 
-            var entries = appContext.LogCollection.Entries;
-            if (!entries.Any())
-                return;
-
-            scopeController.Settings.SetHorizontal(appContext.ScopeViewContext.StartDate, appContext.ScopeViewContext.EndDate);
-
-            var assigned = _pipeline.Run(entries);
-            _adapter.Load(assigned, entries);
-            scopeController.RedrawAll();
+        private void AppendLiveEntry(LogEntry entry)
+        {
+            appContext.LogCollection.Entries.Add(entry);
+            traceManager.Append(entry);
         }
 
         private void UpdateTitle()

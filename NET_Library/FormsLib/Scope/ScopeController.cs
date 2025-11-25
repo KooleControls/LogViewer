@@ -37,6 +37,7 @@ namespace FormsLib.Scope
             Labels.Clear();
             foreach (var v in Traces)
                 v.Points.Clear();
+            RedrawAll();
         }
 
         public static string TicksToString(double ticks)
