@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO.Compression;
 using System.Text;
+using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using YamlDotNet.Serialization.TypeResolvers;

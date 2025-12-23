@@ -32,11 +32,6 @@ namespace LogViewer
         private void InitializeComponent()
         {
             FormsLib.Scope.ScopeController scopeController1 = new FormsLib.Scope.ScopeController();
-            Logging.LogCollection logCollection1 = new Logging.LogCollection();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
-            ProfileConfig profileConfig1 = new ProfileConfig();
-            UnhandeledConfig unhandeledConfig1 = new UnhandeledConfig();
-            ScopeViewContext scopeViewContext1 = new ScopeViewContext();
             splitContainer1 = new SplitContainer();
             splitContainer2 = new SplitContainer();
             scopeView1 = new FormsLib.Scope.Controls.ScopeView();
@@ -44,11 +39,12 @@ namespace LogViewer
             markerView1 = new FormsLib.Scope.Controls.CursorsView();
             tabControl1 = new TabControl();
             tabPageApi = new TabPage();
-            apiSourceControl1 = new Controls.ApiSourceControl();
             tabPageTraces = new TabPage();
             traceView1 = new FormsLib.Scope.Controls.TraceView();
+            tabPage1 = new TabPage();
             statusStrip1 = new StatusStrip();
             toolStripStatusLabel1 = new ToolStripStatusLabel();
+            mqttSourceControl1 = new LogViewer.Controls.MqttSourceControl();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
@@ -58,8 +54,8 @@ namespace LogViewer
             splitContainer2.Panel2.SuspendLayout();
             splitContainer2.SuspendLayout();
             tabControl1.SuspendLayout();
-            tabPageApi.SuspendLayout();
             tabPageTraces.SuspendLayout();
+            tabPage1.SuspendLayout();
             statusStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -135,6 +131,7 @@ namespace LogViewer
             // 
             tabControl1.Controls.Add(tabPageApi);
             tabControl1.Controls.Add(tabPageTraces);
+            tabControl1.Controls.Add(tabPage1);
             tabControl1.Dock = DockStyle.Fill;
             tabControl1.Location = new Point(0, 0);
             tabControl1.Name = "tabControl1";
@@ -144,7 +141,6 @@ namespace LogViewer
             // 
             // tabPageApi
             // 
-            tabPageApi.Controls.Add(apiSourceControl1);
             tabPageApi.Location = new Point(4, 24);
             tabPageApi.Name = "tabPageApi";
             tabPageApi.Padding = new Padding(3);
@@ -152,22 +148,6 @@ namespace LogViewer
             tabPageApi.TabIndex = 1;
             tabPageApi.Text = "WebAPI";
             tabPageApi.UseVisualStyleBackColor = true;
-            // 
-            // apiSourceControl1
-            // 
-            profileConfig1.Name = null;
-            profileConfig1.Traces = (Dictionary<string, TraceConfig>)resources.GetObject("profileConfig1.Traces");
-            unhandeledConfig1.NameKey = "LogCode";
-            unhandeledConfig1.Offset = 0;
-            profileConfig1.Unhandeled = unhandeledConfig1;
-            scopeViewContext1.EndDate = new DateTime(0L);
-            scopeViewContext1.StartDate = new DateTime(0L);
-            apiSourceControl1.Dock = DockStyle.Fill;
-            apiSourceControl1.Location = new Point(3, 3);
-            apiSourceControl1.Margin = new Padding(6);
-            apiSourceControl1.Name = "apiSourceControl1";
-            apiSourceControl1.Size = new Size(282, 985);
-            apiSourceControl1.TabIndex = 1;
             // 
             // tabPageTraces
             // 
@@ -190,6 +170,17 @@ namespace LogViewer
             traceView1.Size = new Size(282, 985);
             traceView1.TabIndex = 0;
             // 
+            // tabPage1
+            // 
+            tabPage1.Controls.Add(mqttSourceControl1);
+            tabPage1.Location = new Point(4, 24);
+            tabPage1.Name = "tabPage1";
+            tabPage1.Padding = new Padding(3);
+            tabPage1.Size = new Size(288, 991);
+            tabPage1.TabIndex = 2;
+            tabPage1.Text = "Mqtt";
+            tabPage1.UseVisualStyleBackColor = true;
+            // 
             // statusStrip1
             // 
             statusStrip1.Items.AddRange(new ToolStripItem[] { toolStripStatusLabel1 });
@@ -204,6 +195,14 @@ namespace LogViewer
             toolStripStatusLabel1.Name = "toolStripStatusLabel1";
             toolStripStatusLabel1.Size = new Size(118, 17);
             toolStripStatusLabel1.Text = "toolStripStatusLabel1";
+            // 
+            // mqttSourceControl1
+            // 
+            mqttSourceControl1.Dock = DockStyle.Fill;
+            mqttSourceControl1.Location = new Point(3, 3);
+            mqttSourceControl1.Name = "mqttSourceControl1";
+            mqttSourceControl1.Size = new Size(282, 985);
+            mqttSourceControl1.TabIndex = 0;
             // 
             // Form1
             // 
@@ -224,8 +223,8 @@ namespace LogViewer
             ((System.ComponentModel.ISupportInitialize)splitContainer2).EndInit();
             splitContainer2.ResumeLayout(false);
             tabControl1.ResumeLayout(false);
-            tabPageApi.ResumeLayout(false);
             tabPageTraces.ResumeLayout(false);
+            tabPage1.ResumeLayout(false);
             statusStrip1.ResumeLayout(false);
             statusStrip1.PerformLayout();
             ResumeLayout(false);
@@ -243,8 +242,9 @@ namespace LogViewer
         private TabPage tabPageTraces;
         private FormsLib.Scope.Controls.TraceView traceView1;
         private TabPage tabPageApi;
-        private Controls.ApiSourceControl apiSourceControl1;
         private StatusStrip statusStrip1;
         private ToolStripStatusLabel toolStripStatusLabel1;
+        private TabPage tabPage1;
+        private Controls.MqttSourceControl mqttSourceControl1;
     }
 }

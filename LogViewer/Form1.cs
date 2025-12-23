@@ -1,61 +1,79 @@
-using FormsLib.Extentions;
+﻿using FormsLib.Extentions;
 using FormsLib.Scope;
-using KCObjectsStandard.Data.Api.KC;
 using LogViewer.AppContext;
 using LogViewer.Config;
 using LogViewer.Config.Models;
+using LogViewer.Controls;
+using LogViewer.Logging;
+using LogViewer.Mapping;
+using LogViewer.Mapping.Interfaces;
+using LogViewer.Mapping.Mappers;
+using LogViewer.Mapping.Models;
 using LogViewer.Utils;
-using Microsoft.Extensions.Caching.Hybrid;
-using System.Collections.Generic;
+using System;
 using System.Reflection;
-using System.Windows.Forms;
-
-
-
 
 namespace LogViewer
 {
-
     public partial class Form1 : Form
     {
         private readonly LogViewerContext appContext;
         private readonly ScopeController scopeController;
-        private readonly LogScopeMapper scopeMapper;
         private readonly ConfigurationService configurationService;
+        private readonly ApiSourceControl apiSourceControl1;
+        private readonly TraceManager traceManager;
 
         public Form1()
         {
             InitializeComponent();
 
-            // Initialize application context and profile
             configurationService = new ConfigurationService();
             appContext = new LogViewerContext();
 
-            // Initialize and configure scope controller
+            // Scope controller
             scopeController = new ScopeController();
             scopeController.Settings.ApplySettings(AppScopeStyles.GetDarkScope());
 
-            // Set up data sources for views
             scopeView1.DataSource = scopeController;
             markerView1.DataSource = scopeController;
             traceView1.DataSource = scopeController;
 
-            // Initialize log scope mapper
-            scopeMapper = new LogScopeMapper(scopeController, appContext);
+            scopeController.Settings.SetHorizontal(
+                DateTime.Now.Date + TimeSpan.FromHours(7),
+                DateTime.Now.Date + TimeSpan.FromHours(18));
+            scopeController.RedrawAll();
 
-            // Configure data source and event handler for source selection control
+            // API source control
+            apiSourceControl1 = new ApiSourceControl();
+            tabPageApi.Controls.Add(apiSourceControl1);
+            apiSourceControl1.Dock = DockStyle.Fill;
             apiSourceControl1.DataSource = appContext;
+
+            // API change → full rebuild
             apiSourceControl1.OnDataChanged += (s, e) => UpdateLogView();
 
-            // Set up the menu items and update the window title
-            UpdateTitle();
+            // MQTT → incremental update
+            mqttSourceControl1.OnLogReceived += (s, entry) => AppendLiveEntry(entry);
 
-            // Load configuration settings
+            // Mappers
+            var mappers = new List<ITraceMapper>
+            {
+                new ThermostatMapper(),
+                new HvacMapper(),
+                new SmarthomeMapper(),
+                new GatewayGpioMapper(),
+                new UnknownMapper(),
+            };
+
+            traceManager = new TraceManager(scopeController, mappers);
+
             this.Load += Form1_Load;
 
 #if RELEASE
             this.Size = new Size(1280, 720);
 #endif
+
+            UpdateTitle();
         }
 
         private async void Form1_Load(object? sender, EventArgs e)
@@ -82,15 +100,9 @@ namespace LogViewer
             // Update menu, so it shows profiles
             UpdateMenu(config);
 
-            // Load default profile
-            var profile = config.Profiles.FirstOrDefault().Value;
-            if (profile != null)
-                LoadProfile(config, profile);
-
             // Load the organisations
             await apiSourceControl1.LoadOrganisations(config.Organisations.Values.ToList());
         }
-
         private async Task<bool> CheckForApplicationUpdates()
         {
             Version? version = Assembly.GetExecutingAssembly().GetName().Version;
@@ -98,12 +110,10 @@ namespace LogViewer
             var latestVersion = await checker.GetLatestVersionAsync();
             return latestVersion > version; 
         }
-
         private async Task<bool> CheckForConfigurationUpdates()
         {
             return await configurationService.DownloadIfUpdatedAsync();
         }
-
         private async Task CheckForUpdates()
         {
             toolStripStatusLabel1.Text = "Checking for config updates";
@@ -137,14 +147,6 @@ namespace LogViewer
 
             toolStripStatusLabel1.Text = "Up-to-date";
         }
-
-        private void LoadProfile(LogViewerConfig config, ProfileConfig profile)
-        {
-            appContext.Profile = profile;
-            UpdateLogView();
-            UpdateMenu(config);
-        }
-
         private void UpdateMenu(LogViewerConfig config)
         {
             // Clear existing menu items
@@ -157,14 +159,7 @@ namespace LogViewer
             menuStrip1.AddMenuItem("File/Close", (menuItem) => this.Close());
 
             // Add menu items for profile selection
-            foreach (var profile in config.Profiles)
-            {
-                string activeText = profile.Value == appContext.Profile ? "(active)" : "";
-                menuStrip1.AddMenuItem($"Profiles/{profile.Value.Name} {activeText}", (menuItem) =>
-                {
-                    LoadProfile(config, profile.Value);
-                });
-            }
+
 
             // Add help menu item
             menuStrip1.AddMenuItem("Help", (menuItem) => Help.ShowHelp());
@@ -172,8 +167,16 @@ namespace LogViewer
 
         private void UpdateLogView()
         {
-            // Redraw the log view based on the current data
-            scopeMapper.Redraw();
+            scopeController.Settings.SetHorizontal(
+                appContext.ScopeViewContext.StartDate,
+                appContext.ScopeViewContext.EndDate);
+            traceManager.LoadAll(appContext.LogCollection.Entries);
+        }
+
+        private void AppendLiveEntry(LogEntry entry)
+        {
+            appContext.LogCollection.Entries.Add(entry);
+            traceManager.Append(entry);
         }
 
         private void UpdateTitle()

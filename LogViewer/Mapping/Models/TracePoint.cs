@@ -1,0 +1,16 @@
+﻿using LogViewer.Logging;
+using LogViewer.Mapping.Models;
+
+namespace LogViewer.Mapping.Models
+{
+    public class TracePoint
+    {
+        public TracePoint()
+        {
+        }
+
+        public DateTime X { get; set; }
+        public double Y { get; set; }
+        public string? Label { get; set; }
+    }
+}

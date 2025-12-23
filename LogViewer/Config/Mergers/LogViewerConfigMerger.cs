@@ -18,9 +18,6 @@ namespace LogViewer.Config.Mergers
             if (!merger.TryMerge(first.Organisations, second.Organisations))
                 return false;
 
-            if (!merger.TryMerge(first.Profiles, second.Profiles))
-                return false;
-
             return true;
         }
     }

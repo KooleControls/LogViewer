@@ -1,6 +1,0 @@
-
-profiles:
-  gateway:
-    unhandeled: 
-      offset: 0
-      nameKey: LogCode
