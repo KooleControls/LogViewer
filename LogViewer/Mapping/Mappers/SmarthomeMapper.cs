@@ -21,6 +21,9 @@ namespace LogViewer.Mapping.Mappers
             {
                 case GatewayLogCodes.SmartHomeStateChanged:
                     MapSmarthomeManager(builder, entry, id);
+                    break;
+
+                case GatewayLogCodes.HeatmanagerStateChanged:
                     MapHeatManager(builder, entry, id);
                     break;
 
