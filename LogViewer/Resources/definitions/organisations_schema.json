@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "LogViewerConfig",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "organisations": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/OrganisationConfig"
+      }
+    }
+  },
+  "definitions": {
+    "OrganisationConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "organisationId": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        },
+        "basePath": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "authPath": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "clientId": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "authenticationMethod": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/AuthenticationMethods"
+            }
+          ]
+        }
+      }
+    },
+    "AuthenticationMethods": {
+      "type": "string",
+      "description": "",
+      "x-enumNames": [
+        "GetOAuth2_OpenIdConnectClient",
+        "GetOAuth2_ApplicationFlowClient"
+      ],
+      "enum": [
+        "GetOAuth2_OpenIdConnectClient",
+        "GetOAuth2_ApplicationFlowClient"
+      ]
+    }
+  }
+}

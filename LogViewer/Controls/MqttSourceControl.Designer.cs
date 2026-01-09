@@ -49,7 +49,7 @@
             textBox_topic.Name = "textBox_topic";
             textBox_topic.Size = new Size(235, 23);
             textBox_topic.TabIndex = 1;
-            textBox_topic.Text = "000000_0";
+            textBox_topic.Text = "666666_1";
             // 
             // btnConnect
             // 

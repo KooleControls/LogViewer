@@ -1,59 +1,77 @@
-﻿using LogViewer.Config.Models;
-using System.Reflection;
+﻿using LogViewer.Config.Helpers;
 using LogViewer.Config.Mergers;
-using LogViewer.Config.Loaders;
-using LogViewer.Config.Resources;
-using LogViewer.Config.Schema;
-using LogViewer.Config.Hashing;
-using LogViewer.Config.Cache;
-using LogViewer.Config.Helpers;
+using LogViewer.Config.Models;
+using LogViewer.Serializers.Yaml;
+using System.Reflection;
 
 namespace LogViewer.Config
 {
     public class ConfigurationService
     {
-
-        // Embedded resources
-
 #if DEBUG
-        private static readonly string VsCodeSettingsResource = $"{Assembly.GetExecutingAssembly().GetName().Name}.Resources.vscode.settings.json";
-        private static readonly string ConfigFileResource = $"{Assembly.GetExecutingAssembly().GetName().Name}.Resources.default_config.development.yaml";
-
-        private static readonly string VsCodeSettingsFile = PathHelper.NormalizePath("%SOLUTION%\\Config\\.vscode\\settings.json");
-        private static readonly string SchemaFile =  PathHelper.NormalizePath("%SOLUTION%\\Config\\schema.json");
-        private static readonly string ConfigFile =  PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer\\debug\\config.yaml");
-        private static readonly string CacheFolder = PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer\\debug\\cache");
-
+        private static readonly string ConfigFolder = PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer_debug");
 #else
-        private static readonly string VsCodeSettingsResource = $"{Assembly.GetExecutingAssembly().GetName().Name}.Resources.vscode.settings.json";
-        private static readonly string ConfigFileResource = $"{Assembly.GetExecutingAssembly().GetName().Name}.Resources.default_config.yaml";
-
-        private static readonly string VsCodeSettingsFile =  PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer\\release\\.vscode\\settings.json");
-        private static readonly string SchemaFile =          PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer\\release\\schema.json");
-        private static readonly string ConfigFile =          PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer\\release\\config.yaml");
-        private static readonly string CacheFolder =         PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer\\release\\cache");
+    private static readonly string ConfigFolder = PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer");
 #endif
 
-        private readonly IResourceProvider _resourceProvider;
-        private readonly ISchemaBuilder _schemaBuilder;
-        private readonly IConfigLoader _configLoader;
-        private readonly IConfigUpdateChecker _configUpdateChecker;
+        private static readonly Assembly ThisAssembly = Assembly.GetExecutingAssembly();
+        private static readonly string Root = ThisAssembly.GetName().Name!;
+
+        // Embedded resource names (verify via GetManifestResourceNames)
+        private static readonly string VsCodeSettingsResource = $"{Root}.Resources..vscode.settings.json";
+        private static readonly string Organisations_SchemaResource = $"{Root}.Resources.definitions.organisations_schema.json";
+        private static readonly string System_OrganisationsResource = $"{Root}.Resources.system_organisations.yaml";
+        private static readonly string User_OrganisationsResource = $"{Root}.Resources.user_organisations.yaml";
+
+        private static readonly string VsCodeSettingsFile = PathHelper.CombinePaths(ConfigFolder, ".vscode\\settings.json");
+        private static readonly string Organisations_SchemaFile = PathHelper.CombinePaths(ConfigFolder, "schema.json");
+        private static readonly string User_OrganisationsFile = PathHelper.CombinePaths(ConfigFolder, "user_organisations.yaml");
+
+        private readonly IConfigMerger configMerger;
 
         public ConfigurationService()
         {
-            // Shared infrastructure
-            var hashProvider = new Md5HashProvider();
-            var cacheManager = new CacheManager(CacheFolder, hashProvider);
-            var merger = BuildMerger();
+            ExportResourceIfNotExists(VsCodeSettingsResource, VsCodeSettingsFile);
+            ExportResourceIfNotExists(Organisations_SchemaResource, Organisations_SchemaFile);
+            ExportResourceIfNotExists(User_OrganisationsResource, User_OrganisationsFile);
+            configMerger = BuildMerger();
+        }
 
-            _resourceProvider = new ResourceProvider();
-            _schemaBuilder = new SchemaBuilder();
-            _configLoader = new RecursiveConfigLoader(cacheManager, merger);
-            _configUpdateChecker = new RecursiveConfigUpdateChecker(cacheManager);
+        public LogViewerConfig GetConfigAsync(CancellationToken token = default)
+        {
+            LogViewerConfig config = new LogViewerConfig();
+            configMerger.TryMerge(config, GetConfigFromResource(System_OrganisationsResource));
+            configMerger.TryMerge(config, GetConfigFromFile(User_OrganisationsFile));
+            return config;
+        }
 
-            EnsureDefaultConfigExists();
-            EnsureSchemaExists();
-            EnsureVsCodeSettingsExists();
+        private LogViewerConfig? GetConfigFromResource(string resource)
+        {
+            string? yaml = ReadEmbeddedResource(resource);
+            if (yaml == null)
+                return null;
+            if (!YamlSerializer.LoadYaml(yaml, out LogViewerConfig config))
+                return null;
+            return config;
+        }
+
+        private LogViewerConfig? GetConfigFromFile(string filePath)
+        {
+            if (!YamlSerializer.LoadYaml(new FileInfo(filePath), out LogViewerConfig config))
+                return null;
+            return config;
+        }
+
+        private static void ExportResourceIfNotExists(string resource, string destination)
+        {
+            string path = Path.GetDirectoryName(destination)!;
+            Directory.CreateDirectory(path);
+            if (File.Exists(destination))
+                return;
+            string? content = ReadEmbeddedResource(resource);
+            if (content == null)
+                return;
+            File.WriteAllText(destination, content);
         }
 
         private static IConfigMerger BuildMerger()
@@ -65,53 +83,14 @@ namespace LogViewer.Config
             return merger;
         }
 
-        public async Task<LogViewerConfig> GetConfigAsync(CancellationToken token = default)
+
+        public static string? ReadEmbeddedResource(string resourceName)
         {
-            return await _configLoader.LoadAndMergeAsync(ConfigFile, token);
-        }
-
-        public async Task<bool> DownloadIfUpdatedAsync(CancellationToken token = default)
-        {
-            return await _configUpdateChecker.DownloadIfUpdatedRecursiveAsync(ConfigFile, token);
-        }
-
-        public void EnsureDefaultConfigExists()
-        {
-            if (File.Exists(ConfigFile))
-                return;
-
-            Directory.CreateDirectory(Path.GetDirectoryName(ConfigFile)!);
-            var fileContents = _resourceProvider.ReadEmbeddedYaml(ConfigFileResource);
-            File.WriteAllText(ConfigFile, fileContents);
-
-            Directory.CreateDirectory(Path.GetDirectoryName(SchemaFile)!);
-        }
-
-        public void EnsureVsCodeSettingsExists()
-        {
-            if (File.Exists(VsCodeSettingsFile))
-                return;
-
-            Directory.CreateDirectory(Path.GetDirectoryName(VsCodeSettingsFile)!);
-            var fileContents = _resourceProvider.ReadEmbeddedYaml(VsCodeSettingsResource);
-            File.WriteAllText(VsCodeSettingsFile, fileContents);
-        }
-
-        public void EnsureSchemaExists()
-        {
-            var newSchema = _schemaBuilder.GetSchema();
-
-            if (File.Exists(SchemaFile))
-            {
-                var existingSchema = File.ReadAllText(SchemaFile);
-
-                if (existingSchema == newSchema)
-                    return;
-            }
-
-            Directory.CreateDirectory(Path.GetDirectoryName(SchemaFile)!);
-            File.WriteAllText(SchemaFile, newSchema);
+            using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
+            if (stream == null)
+                return null;
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
         }
     }
-
 }

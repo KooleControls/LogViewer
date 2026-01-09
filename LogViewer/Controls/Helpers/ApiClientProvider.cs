@@ -7,21 +7,14 @@ namespace LogViewer.Controls.Helpers
 {
     public class ApiClientProvider
     {
-        private Func<string, string, string?> passwordProvider;
         private readonly HybridCache hybridCache;
+        private readonly IClientCredentialsSource clientCredentialsSource;
 
-        public ApiClientProvider()
+        public ApiClientProvider(IClientCredentialsSource clientCredentialsSource)
         {
-            passwordProvider = (prompt, title) => "";
             hybridCache = Program.ServiceProvider.GetRequiredService<HybridCache>();
-
+            this.clientCredentialsSource = clientCredentialsSource;
         }
-
-        public void SetPasswordProvider(Func<string, string, string?> provider)
-        {
-            passwordProvider = provider ?? throw new ArgumentNullException(nameof(provider));
-        }
-
 
         public async Task<InternalApiClient?> CreateAuthenticatedClientAsync(OrganisationConfig organisation, CancellationToken token)
         {
@@ -59,23 +52,27 @@ namespace LogViewer.Controls.Helpers
         {
             return org.AuthenticationMethod switch
             {
-                AuthenticationMethods.GetOAuth2_OpenIdConnectClient =>
-                    InternalApiClient.GetOAuth2OpenIdConnectClient(org.BasePath, org.AuthPath, org.ClientId, hybridCache),
-
-                AuthenticationMethods.GetOAuth2_ApplicationFlowClient =>
-                    InternalApiClient.GetOAuth2ApplicationFlowClient(
-                        org.BasePath,
-                        org.ClientId,
-                        GetClientSecret(org),
-                        hybridCache),
-
-                _ => null
+                AuthenticationMethods.GetOAuth2_OpenIdConnectClient => CreateClient_OpenIdConnectClient(org),
+                AuthenticationMethods.GetOAuth2_ApplicationFlowClient => CreateClient_ApplicationFlowClient(org),
             };
         }
 
-        private string? GetClientSecret(OrganisationConfig organisation)
+
+        private InternalApiClient? CreateClient_OpenIdConnectClient(OrganisationConfig org)
         {
-            return passwordProvider($"Enter the apiclient password for {organisation.Name}:", "Login");
+            return InternalApiClient.GetOAuth2OpenIdConnectClient(org.BasePath, org.AuthPath, org.ClientId, hybridCache);
+        }
+
+        private InternalApiClient? CreateClient_ApplicationFlowClient(OrganisationConfig org)
+        {
+            var credentials = clientCredentialsSource.GetClientCredentials(org);
+            if (credentials == null)
+                return null;
+
+            return InternalApiClient.GetOAuth2ApplicationFlowClient(org.BasePath, credentials.ClientId, credentials.ClientSecret, hybridCache);
         }
     }
 }
+
+
+
