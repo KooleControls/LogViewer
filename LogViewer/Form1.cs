@@ -82,7 +82,7 @@ namespace LogViewer
             
             try
             {
-                var config = await configurationService.GetConfigAsync();
+                var config = configurationService.GetConfigAsync();
                 await LoadConfig(config);
             }
             catch (Exception ex) {
@@ -110,24 +110,9 @@ namespace LogViewer
             var latestVersion = await checker.GetLatestVersionAsync();
             return latestVersion > version; 
         }
-        private async Task<bool> CheckForConfigurationUpdates()
-        {
-            return await configurationService.DownloadIfUpdatedAsync();
-        }
+
         private async Task CheckForUpdates()
         {
-            toolStripStatusLabel1.Text = "Checking for config updates";
-            bool configUpdateAvailable = await CheckForConfigurationUpdates();
-            if (configUpdateAvailable)
-            {
-                toolStripStatusLabel1.Text = "New config available, reloading...";
-                // Reload the configuration
-                var config = await configurationService.GetConfigAsync();
-                if (config != null)
-                    await LoadConfig(config);
-
-            }
-
             toolStripStatusLabel1.Text = "Checking for application updates";
             bool applicationUpdateAvailable = await CheckForApplicationUpdates();
             if (applicationUpdateAvailable)

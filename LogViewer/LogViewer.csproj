@@ -31,13 +31,20 @@
 	
   <ItemGroup>
     <None Remove="default_config.yaml" />
+    <None Remove="Resources\definitions\organisations_schema.json" />
+    <None Remove="Resources\organisations.yaml" />
+    <None Remove="Resources\organizations.yaml" />
+    <None Remove="Resources\schema.json" />
+    <None Remove="Resources\system_organisations.yaml" />
+    <None Remove="Resources\user_organisations.yaml" />
     <None Remove="Resources\vscode.settings.json" />
   </ItemGroup>
 	
   <ItemGroup>
-    <EmbeddedResource Include="Resources\default_config.development.yaml" />
-    <EmbeddedResource Include="Resources\default_config.yaml" />
-    <EmbeddedResource Include="Resources\vscode.settings.json" />
+    <EmbeddedResource Include="Resources\.vscode\settings.json" />
+    <EmbeddedResource Include="Resources\definitions\organisations_schema.json" />
+    <EmbeddedResource Include="Resources\system_organisations.yaml" />
+    <EmbeddedResource Include="Resources\user_organisations.yaml" />
   </ItemGroup>
 	
   <ItemGroup>

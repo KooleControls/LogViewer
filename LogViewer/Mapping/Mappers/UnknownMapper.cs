@@ -55,8 +55,16 @@ namespace LogViewer.Mapping.Mappers
                 GatewayLogCodes.Relais2Changed => true,
                 GatewayLogCodes.Input1Changed => true,
                 GatewayLogCodes.Input2Changed => true,
+                GatewayLogCodes.TempSetpointOverride => true,
+                GatewayLogCodes.HeaterActiveChanged => true,
+                GatewayLogCodes.CoolerActiveChanged => true,
+                GatewayLogCodes.TempMon_StateChanged => true,
+                GatewayLogCodes.TempMon_OverTemp => true,
+                GatewayLogCodes.TempMon_UnderTemp => true,
+                GatewayLogCodes.TempMon_UnderTempHalf => true,
                 _ => false,
             };
         }
     }
 }
+

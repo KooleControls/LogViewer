@@ -12,7 +12,7 @@ namespace LogViewer
     {
         public static void ShowHelp()
         {
-            string url = "https://github.com/KooleControls/LogViewer/blob/main/Config/README.md";
+            string url = "https://github.com/KooleControls/LogViewer/README.md";
             Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
         }
     }

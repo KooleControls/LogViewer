@@ -14,6 +14,25 @@ namespace LogViewer.Serializers.Yaml
 {
     public static class YamlSerializer
     {
+        static public bool LoadYaml<T>(string yaml, out T obj)
+        {
+            obj = default;
+            try
+            {
+                var deserializer = CreateDeserializer();
+                var deserialized = deserializer.Deserialize<T>(yaml);
+                if (deserialized == null)
+                    return false;
+                obj = deserialized;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+                return false;
+            }
+            return true;
+        }
+
         static public bool LoadYaml<T>(FileInfo file, out T obj)
         {
             obj = default;

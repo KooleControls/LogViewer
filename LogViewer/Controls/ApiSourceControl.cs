@@ -89,8 +89,8 @@ namespace LogViewer.Controls
             dateTimePickerFrom.Value = DateTime.Now.Date;
             dateTimePickerUntill.Value = DateTime.Now.Date + TimeSpan.FromDays(1);
 
-            apiClientProvider = new ApiClientProvider();
-            apiClientProvider.SetPasswordProvider(DialogHelper.ShowPasswordPrompt);
+            var clientCredentialsDialog = new DialogClientCredentialsSource();
+            apiClientProvider = new ApiClientProvider(clientCredentialsDialog);
         }
 
 
