@@ -8,12 +8,7 @@ namespace LogViewer.Config
 {
     public class ConfigurationService
     {
-#if DEBUG
-        private static readonly string ConfigFolder = PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer_debug");
-#else
-    private static readonly string ConfigFolder = PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer");
-#endif
-
+        private static readonly string ConfigFolder = PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer");
         private static readonly Assembly ThisAssembly = Assembly.GetExecutingAssembly();
         private static readonly string Root = ThisAssembly.GetName().Name!;
 

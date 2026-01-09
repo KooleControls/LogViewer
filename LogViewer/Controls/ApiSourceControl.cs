@@ -96,7 +96,6 @@ namespace LogViewer.Controls
 
         public async Task LoadOrganisations(List<OrganisationConfig> organisationConfigs)
         {
-            
             await RunWithDisabledControlsAsync(async token =>
             {
                 await organisationsManager.Load(new ApiOrganisationProvider(organisationConfigs), token);

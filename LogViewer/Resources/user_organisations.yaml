@@ -5,5 +5,4 @@ organisations:
     organisationId: 1
     basePath: https://test-test.kcsmartho.me/api
     authenticationMethod: GetOAuth2_OpenIdConnectClient
-    authPath: https://accounts.kcsmart.net/realms/test-test
-
+    authPath: https://accounts.kcsmart.net/realms/test

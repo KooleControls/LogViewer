@@ -8,9 +8,7 @@ using LogViewer.Logging;
 using LogViewer.Mapping;
 using LogViewer.Mapping.Interfaces;
 using LogViewer.Mapping.Mappers;
-using LogViewer.Mapping.Models;
 using LogViewer.Utils;
-using System;
 using System.Reflection;
 
 namespace LogViewer
@@ -78,37 +76,27 @@ namespace LogViewer
 
         private async void Form1_Load(object? sender, EventArgs e)
         {
-            // Load config from cache
-            
             try
             {
                 var config = configurationService.GetConfigAsync();
-                await LoadConfig(config);
+                UpdateMenu(config);
+                await apiSourceControl1.LoadOrganisations(config.Organisations.Values.ToList());
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 MessageBox.Show($"Failed to load configuration: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            // Check for new config in background
             _ = CheckForUpdates();
         }
 
-        private async Task LoadConfig(LogViewerConfig config)
-        {
-
-            // Update menu, so it shows profiles
-            UpdateMenu(config);
-
-            // Load the organisations
-            await apiSourceControl1.LoadOrganisations(config.Organisations.Values.ToList());
-        }
         private async Task<bool> CheckForApplicationUpdates()
         {
             Version? version = Assembly.GetExecutingAssembly().GetName().Version;
             var checker = new GithubUpdateChecker("KooleControls", "LogViewer");
             var latestVersion = await checker.GetLatestVersionAsync();
-            return latestVersion > version; 
+            return latestVersion > version;
         }
 
         private async Task CheckForUpdates()
@@ -119,7 +107,8 @@ namespace LogViewer
             {
                 toolStripStatusLabel1.Text = $"New application version available";
                 toolStripStatusLabel1.IsLink = true;
-                toolStripStatusLabel1.Click += (sender, e) => {
+                toolStripStatusLabel1.Click += (sender, e) =>
+                {
                     var url = $"https://github.com/KooleControls/LogViewer/releases";
                     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                     {
@@ -134,27 +123,19 @@ namespace LogViewer
         }
         private void UpdateMenu(LogViewerConfig config)
         {
-            // Clear existing menu items
             menuStrip1.Items.Clear();
 
-            // Add menu items for file operations
             menuStrip1.AddMenuItem("File/New", (menuItem) => scopeController.ClearData());
             menuStrip1.AddMenuItem("File/Open", (menuItem) => { AppContextFileStore.LoadLogDialog(appContext); UpdateLogView(); });
             menuStrip1.AddMenuItem("File/Save", (menuItem) => { AppContextFileStore.SaveLogDialog(appContext); });
             menuStrip1.AddMenuItem("File/Close", (menuItem) => this.Close());
 
-            // Add menu items for profile selection
-
-
-            // Add help menu item
             menuStrip1.AddMenuItem("Help", (menuItem) => Help.ShowHelp());
         }
 
         private void UpdateLogView()
         {
-            scopeController.Settings.SetHorizontal(
-                appContext.ScopeViewContext.StartDate,
-                appContext.ScopeViewContext.EndDate);
+            scopeController.Settings.SetHorizontal(appContext.ScopeViewContext.StartDate, appContext.ScopeViewContext.EndDate);
             traceManager.LoadAll(appContext.LogCollection.Entries);
         }
 
@@ -166,25 +147,9 @@ namespace LogViewer
 
         private void UpdateTitle()
         {
-            // Get the version of the application
             Version? version = Assembly.GetExecutingAssembly().GetName().Version;
-
-            // Retrieve the build type from the configuration
             string buildType = GetBuildType();
-
-            // Update the form title based on the build type
             this.Text = $"Log viewer '{version}' ({buildType})";
-        }
-
-        protected override void WndProc(ref Message m)
-        {
-            switch (m.Msg)
-            {
-                case 537: //WM_DEVICECHANGE
-                    //comConsoleControl1.RefresComPorts();
-                    break;
-            }
-            base.WndProc(ref m);
         }
 
         public static string GetBuildType()
