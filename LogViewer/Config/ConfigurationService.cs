@@ -24,7 +24,7 @@ namespace LogViewer.Config
         private static readonly string User_OrganisationsResource = $"{Root}.Resources.user_organisations.yaml";
 
         private static readonly string VsCodeSettingsFile = PathHelper.CombinePaths(ConfigFolder, ".vscode\\settings.json");
-        private static readonly string Organisations_SchemaFile = PathHelper.CombinePaths(ConfigFolder, "schema.json");
+        private static readonly string Organisations_SchemaFile = PathHelper.CombinePaths(ConfigFolder, "definitions\\organisations_schema.json");
         private static readonly string User_OrganisationsFile = PathHelper.CombinePaths(ConfigFolder, "user_organisations.yaml");
 
         private readonly IConfigMerger configMerger;
