@@ -1,44 +1,34 @@
-﻿using KC.InternalApi.Model;
-using KC.InternalApiClient;
-using System.Runtime.CompilerServices;
+﻿using KC.InternalApiClient;
 
 namespace LogViewer.Providers.API
 {
     public class ApiGatewayProviderBuilder
     {
         private readonly InternalApiClient client;
-        private readonly List<string> filters = new();
-        private readonly List<string> sort = new();
+        private readonly ApiGatewayProvider provider;
 
         public ApiGatewayProviderBuilder(InternalApiClient client)
         {
             this.client = client;
+            provider = new ApiGatewayProvider(client);
         }
 
         public ApiGatewayProviderBuilder ForObjectItem(int objectItemId)
         {
-            filters.Add($"ObjectItem.Id::{objectItemId}");
+            provider.Filters.Add($"ObjectItem.Id::{objectItemId}");
             return this;
         }
 
         public ApiGatewayProviderBuilder WithSortByName()
         {
-            sort.Clear();
-            sort.Add("Name");
+            provider.Sort.Clear();
+            provider.Sort.Add("Name");
             return this;
         }
 
-        public ApiDataProvider<Gateway> Build()
+        public ApiGatewayProvider Build()
         {
-            Func<InternalApiClient, List<string>, List<string>, CancellationToken, IProgress<double>?, IAsyncEnumerable<Gateway>> getItemsFunc =
-                (c, f, s, t, p) => c.GatewayApi.GetAllItemsAsync(f, s, t, p);
-
-            return new ApiDataProvider<Gateway>(
-                client,
-                filters,
-                sort,
-                getItemsFunc
-            );
+            return provider;
         }
     }
 

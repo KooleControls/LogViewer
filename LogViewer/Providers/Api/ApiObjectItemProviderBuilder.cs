@@ -1,5 +1,4 @@
-﻿using KC.InternalApi.Model;
-using KC.InternalApiClient;
+﻿using KC.InternalApiClient;
 using Octokit;
 
 namespace LogViewer.Providers.API
@@ -7,62 +6,42 @@ namespace LogViewer.Providers.API
     public class ApiObjectItemProviderBuilder
     {
         private readonly InternalApiClient client;
-        private readonly List<string> filters = new();
-        private readonly List<string> sort = new();
+        private readonly ApiObjectItemProvider provider;
 
         public ApiObjectItemProviderBuilder(InternalApiClient client)
         {
             this.client = client;
+            provider = new ApiObjectItemProvider(client);
         }
 
         public ApiObjectItemProviderBuilder ForResort(int resortId)
         {
-            filters.Add($"Resort.Id::{resortId}");
+            provider.Filters.Add($"Resort.Id::{resortId}");
             return this;
         }
 
         public ApiObjectItemProviderBuilder WithRequireGateway()
         {
-            filters.Add("Gateways.Id>:0");
+            provider.Filters.Add("Gateways.Id>:0");
             return this;
         }
 
         public ApiObjectItemProviderBuilder WhereName(string nameFilter)
         {
-            filters.Add($"Name:%{nameFilter}%");
+            provider.Filters.Add($"Name:%{nameFilter}%");
             return this;
         }
 
         public ApiObjectItemProviderBuilder WithSortByName()
         {
-            sort.Clear();
-            sort.Add("Name");
+            provider.Sort.Clear();
+            provider.Sort.Add("Name");
             return this;
         }
 
-        public ApiDataProvider<ObjectItem> Build()
+        public ApiObjectItemProvider Build()
         {
-            Func<InternalApiClient, List<string>, List<string>, CancellationToken, IProgress<double>?, IAsyncEnumerable<ObjectItem>> getItemsFunc =
-                (c, f, s, t, p) =>
-                {
-                    return c.ObjectApi.GetAllItemsAsync(f, s, t, p);
-                };
-            
-            return new ApiDataProvider<ObjectItem>(
-                client,
-                filters,
-                sort,
-                getItemsFunc
-            );
+            return provider;
         }
     }
-
-
-
-
-
-
-
-
-
 }

@@ -25,8 +25,10 @@ namespace LogViewer.Mapping.Mappers
                     MapActualTemperature(builder, entry, id);
                     break;
                 case GatewayLogCodes.Therm_TempSetpointChanged:
-                case GatewayLogCodes.TempSetpointOverride:
                     MapSetpointTemperature(builder, entry, id, code);
+                    break;
+                case GatewayLogCodes.TempSetpointOverride:
+                    MapTempSetpointOverride(builder, entry, id, code);
                     break;
                 case GatewayLogCodes.Therm_HeatingRequestChanged:
                     MapHeatingRequest(builder, entry, id);
@@ -56,6 +58,27 @@ namespace LogViewer.Mapping.Mappers
                 entry.Measurement ?? 0));
         }
 
+
+
+        private void MapTempSetpointOverride(ITraceBuilder builder, LogEntry entry, int id, GatewayLogCodes? code)
+        {
+            var descriptor = new TraceDescriptor
+            {
+                TraceId = $"THR{id}_TempSetpoint",
+                Category = "Setpoint",
+                EntityId = $"THR:{id}",
+                DrawStyle = DrawStyles.NonInterpolatedLine,
+                DrawOption = DrawOptions.None | DrawOptions.ExtendEnd,
+                BaseColor = Color.FromArgb(unchecked((int)0xFFFF0000)),
+                Source = nameof(ThermostatMapper)
+            };
+
+            var trace = builder.GetOrCreate(descriptor);
+            var label = new LinkedLabel(trace.Trace, entry.TimeStamp.Ticks, entry.Measurement ?? 0);
+            label.Text = "OVE";
+            trace.ScopeController.Labels.Add(label);
+        }
+
         private void MapSetpointTemperature(ITraceBuilder builder, LogEntry entry, int id, GatewayLogCodes? code)
         {
             var descriptor = new TraceDescriptor
@@ -70,18 +93,9 @@ namespace LogViewer.Mapping.Mappers
             };
 
             var trace = builder.GetOrCreate(descriptor);
-            if (code == GatewayLogCodes.TempSetpointOverride)
-            {
-                var label = new LinkedLabel(trace.Trace, entry.TimeStamp.Ticks, entry.Measurement ?? 0);
-                label.Text = "OVE";
-                trace.ScopeController.Labels.Add(label);
-            }
-
             trace.Trace.Points.Add(new PointD(
                 entry.TimeStamp.Ticks,
                 entry.Measurement ?? 0));
-
-            // Note: ordering by X is handled later (TraceFactory uses OrderBy on Points)
         }
 
         private void MapHeatingRequest(ITraceBuilder builder, LogEntry entry, int id)

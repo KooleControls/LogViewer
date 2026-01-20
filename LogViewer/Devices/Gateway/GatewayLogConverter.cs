@@ -1,4 +1,5 @@
-﻿using KC.InternalApi.Model;
+﻿using DevExpress.Data.Svg;
+using KC.InternalApi.Model;
 using LogViewer.Logging;
 using System.Text;
 using DeviceType = LogViewer.Logging.DeviceType;
@@ -9,7 +10,36 @@ namespace LogViewer.Devices.Gateway
     public class GatewayLogConverter
     {
 
-        public static LogEntry? ConvertItem(GatewayLog logItem)
+        public static List<LogEntry> ConvertItems(IEnumerable<GatewayLog> items)
+        {
+            List<LogEntry> logEntries = new List<LogEntry>();
+            foreach (var item in items)
+            {
+                var logEntry = FromGatewayLog(item);
+                if (logEntry != null)
+                {
+                    logEntries.Add(logEntry);
+                }
+            }
+            return logEntries;
+
+        }
+        public static List<LogEntry> ConvertItems(IEnumerable<DeviceData> items)
+        {
+            List<LogEntry> logEntries = new List<LogEntry>();
+            foreach (var item in items)
+            {
+                var logEntry = FromDeviceData(item);
+                if (logEntry != null)
+                {
+                    logEntries.Add(logEntry);
+                }
+            }
+            return logEntries;
+
+        }
+
+        public static LogEntry? FromGatewayLog(GatewayLog logItem)
         {
             if (logItem.TimeStamp == null)
                 return null;
@@ -31,6 +61,32 @@ namespace LogViewer.Devices.Gateway
             };
 
             ExpandLogEntry(logEntry, logCode, logItem.Data);
+            return logEntry;
+        }
+
+        public static LogEntry? FromDeviceData(DeviceData data)
+        {
+            data.SubDeviceType ??= 1;    // When we dont have rights, assume it's a gateway log
+            if (data.SubDeviceType != 1)
+                return null;
+            if (data.TimeStamp == null)
+                return null;
+            if (data.Code == null)
+                return null;
+
+            GatewayLogCodes logCode = (GatewayLogCodes)data.Code;
+            if (logCode == GatewayLogCodes.xA0_SMARTHOME_EVENT)
+                logCode = (GatewayLogCodes)(0xA0000000 | (data.Data[0] << 8) | data.Data[1]);
+
+            LogEntry logEntry = new LogEntry()
+            {
+                TimeStamp = data.TimeStamp.Value,
+                LogCode = (UInt32)logCode,
+                RawData = data.Data,
+                SourceSoftwareId = SoftwareId.Gateway_1245,
+                DeviceId = 0,
+            };
+            ExpandLogEntry(logEntry, logCode, data.Data);
             return logEntry;
         }
 

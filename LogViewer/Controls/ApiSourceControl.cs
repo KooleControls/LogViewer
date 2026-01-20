@@ -119,8 +119,9 @@ namespace LogViewer.Controls
                 if (apiClient == null)
                     return;
 
+
                 var provider = new ApiResortProviderBuilder(apiClient)
-                    .ForOrganisation(organisation.OrganisationId.Value)
+                    .ForOrganization(organisation.OrganisationId.Value)
                     .WithSortByName()
                     .Build();
 

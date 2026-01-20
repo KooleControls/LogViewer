@@ -26,7 +26,7 @@ namespace LogViewer.Serializers.Csv
 
                 if (TryParse(line, out var gatewayLog))
                 {
-                    var entry = GatewayLogConverter.ConvertItem(gatewayLog);
+                    var entry = GatewayLogConverter.FromGatewayLog(gatewayLog);
 
                     if (entry != null)
                     {

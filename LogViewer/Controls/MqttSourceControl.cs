@@ -76,7 +76,7 @@ namespace LogViewer.Controls
                 gateway: null
             );
 
-            LogEntry? entry = GatewayLogConverter.ConvertItem(log);
+            LogEntry? entry = GatewayLogConverter.FromGatewayLog(log);
             if (entry == null)
                 return;
 
