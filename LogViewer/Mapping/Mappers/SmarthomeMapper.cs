@@ -4,6 +4,7 @@ using LogViewer.Logging;
 using LogViewer.Mapping.Interfaces;
 using LogViewer.Mapping.Models;
 using static FormsLib.Scope.Trace;
+using static Org.BouncyCastle.Crypto.Engines.SM2Engine;
 
 namespace LogViewer.Mapping.Mappers
 {
@@ -44,7 +45,7 @@ namespace LogViewer.Mapping.Mappers
                 4.0 => "TempOverride",
                 5.0 => "Initializing",
                 6.0 => "NightTime",
-                _ => "Unknown"
+                _ => mode.ToString()
             };
 
             var descriptor = new TraceDescriptor
@@ -69,13 +70,16 @@ namespace LogViewer.Mapping.Mappers
         {
             var stateLookup = (double mode) => mode switch
             {
-                0.0 => "Initializing",
-                1.0 => "Wait",
-                2.0 => "Cooling",
-                3.0 => "Heating",
-                4.0 => "Off",
-                5.0 => "FrostProtection",
-                _ => "Unknown"
+                 0 => "Initializing",
+                 4 => "Off",
+                 1 => "WaitForModeChange",
+                 3 => "HeatingStandby",
+                 6 => "HeatingActive",
+                 2 => "CoolingStandby",
+                 7 => "CoolingActive",
+                 5 => "FrostProtectionStandby",
+                 8 => "FrostProtectionActive",
+                 _ => mode.ToString(),
             };
 
             var descriptor = new TraceDescriptor
@@ -129,7 +133,7 @@ namespace LogViewer.Mapping.Mappers
                 26.0 => "InvalidDeviceReply_ProtocolId",
                 27.0 => "InvalidDeviceReply_UnitId",
                 28.0 => "InvalidDeviceReply_ReplyLength",
-                _ => "Unknown"
+                _ => code.ToString(),
             };
 
             var descriptor = new TraceDescriptor

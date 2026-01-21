@@ -1,6 +1,7 @@
 ﻿using DevExpress.Data.Svg;
 using KC.InternalApi.Model;
 using KC.InternalApiClient;
+using KC.InternalApiClient.Model.Exceptions;
 using KCObjectsStandard.Data.Api.KC;
 using KCObjectsStandard.Data.KC.Api;
 using LogViewer.Devices.Gateway;
@@ -80,16 +81,20 @@ namespace LogViewer.Providers.API
                     progress?.Report(items.Last().TimeStamp);
                 }
             }
-            catch (OperationCanceledException)
+            catch (KCApiException ex)
             {
-                Debug.WriteLine("Operation was canceled.");
-                return logEntries; // Return the log collected so far if the operation is canceled
+                if (ex.InnerException is OperationCanceledException operationCanceledException)
+                {
+                    return logEntries;
+                }
+
+                Debug.WriteLine($"Error occurred during API call: {ex.Message}");
+                throw;
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error occurred during API call: {ex.Message}");
-                if (!ex.Message.Contains("canceled"))
-                    throw;
+                throw;
             }
             return logEntries;
         }

@@ -5,6 +5,8 @@ namespace LogViewer.Controls.Helpers
 {
     public class InfoViewManager
     {
+        private const string NoAccess = "N/A";
+
         private readonly RichTextBox textBox;
 
         private string host = "";
@@ -35,17 +37,17 @@ namespace LogViewer.Controls.Helpers
 
         public void Update(ResortSettings? resortSettings)
         {
-            iST = resortSettings?.InstallCode ?? "";
-            host = resortSettings?.ConnectionServerSettings?.ServerAddress ?? "";
-            cOM = resortSettings?.ConnectionServerSettings?.ComPort?.ToString() ?? "";
-            tRG = resortSettings?.ConnectionServerSettings?.TrgPort?.ToString() ?? "";
+            iST = ValueOrNoAccess(resortSettings?.InstallCode);
+            host = ValueOrNoAccess(resortSettings?.ConnectionServerSettings?.ServerAddress);
+            cOM = ValueOrNoAccess(resortSettings?.ConnectionServerSettings?.ComPort?.ToString());
+            tRG = ValueOrNoAccess(resortSettings?.ConnectionServerSettings?.TrgPort?.ToString());
             Print();
         }
 
         public void Update(Gateway? gateway)
         {
-            sID = gateway?.Sid?.ToString() ?? "";
-            dEVID = gateway?.GatewayId?.ToString() ?? "";
+            sID = ValueOrNoAccess(gateway?.Sid?.ToString());
+            dEVID = ValueOrNoAccess(gateway?.GatewayId?.ToString());
             Print();
         }
 
@@ -79,7 +81,6 @@ namespace LogViewer.Controls.Helpers
         {
             apiUrl = "";
             ClearResortInfo();
-            Print();
         }
 
         public void ClearResortInfo()
@@ -89,7 +90,6 @@ namespace LogViewer.Controls.Helpers
             cOM = "";
             tRG = "";
             ClearGatewayInfo();
-            Print();
         }
 
         public void ClearGatewayInfo()
@@ -99,11 +99,12 @@ namespace LogViewer.Controls.Helpers
             Print();
         }
 
-
+        private static string ValueOrNoAccess(string? value)
+            => string.IsNullOrWhiteSpace(value) ? NoAccess : value;
 
         private void Print()
         {
-            string compl = this.completedRequests.ToString();
+            string compl = completedRequests.ToString();
             string min = minResponseTime != TimeSpan.MaxValue ? $"{minResponseTime.TotalMilliseconds:F0} ms" : "-";
             string max = maxResponseTime != TimeSpan.Zero ? $"{maxResponseTime.TotalMilliseconds:F0} ms" : "-";
             string avg = completedRequests > 0 ? $"{avgResponseTime.TotalMilliseconds:F0} ms" : "-";
@@ -115,7 +116,6 @@ IST     COM     TRG     SID     DEVID
 Calls   Min     Max     Avg
 {compl.PadRight(7)} {min.PadRight(7)} {max.PadRight(7)} {avg.PadRight(7)}
 ";
-
         }
     }
 }
