@@ -6,7 +6,7 @@ on:
       - "v*"
 
 permissions:
-  contents: write # required for creating releases
+  contents: write
 
 jobs:
   build:
@@ -24,15 +24,21 @@ jobs:
         with:
           dotnet-version: "8.x"
 
-      # Optional. Keep only if you actually call msbuild.exe directly.
+      # Optional. Keep only if you actually call msbuild.exe directly (dotnet build/publish doesn't require this).
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Add Azure DevOps feed with PAT
+      - name: Configure Azure DevOps NuGet feed (idempotent)
         shell: pwsh
         run: |
-          dotnet nuget add source "https://pkgs.dev.azure.com/koolecontrols/_packaging/koolecontrols/nuget/v3/index.json" `
-            --name "KooleControls" `
+          $sourceName = "KooleControls"
+          $sourceUrl  = "https://pkgs.dev.azure.com/koolecontrols/_packaging/koolecontrols/nuget/v3/index.json"
+
+          # Remove if it already exists (avoid "already been added" failures)
+          dotnet nuget remove source $sourceName 2>$null | Out-Null
+
+          dotnet nuget add source $sourceUrl `
+            --name $sourceName `
             --username "AzureDevOps" `
             --password "${{ secrets.AZURE_ARTIFACTS_PAT }}" `
             --store-password-in-clear-text
@@ -41,20 +47,27 @@ jobs:
         id: ver
         shell: pwsh
         run: |
-          $tag = "${{ github.ref_name }}"         # v1.4.0-b1 or v1.4.0
-          if (-not $tag.StartsWith("v")) { throw "Tag must start with 'v' (e.g., v1.4.0 or v1.4.0-b1). Got: $tag" }
+          $tag = "${{ github.ref_name }}"  # v1.4.0-b1 or v1.4.0
+          if (-not $tag.StartsWith("v")) {
+            throw "Tag must start with 'v' (e.g., v1.4.0 or v1.4.0-b1). Got: $tag"
+          }
 
-          $version = $tag.Substring(1)            # 1.4.0-b1 or 1.4.0
+          $version = $tag.Substring(1)     # 1.4.0-b1 or 1.4.0
           $isPrerelease = $version.Contains("-")
 
-          $base = $version.Split("-")[0]          # 1.4.0
-          # AssemblyVersion/FileVersion must be numeric: 1.4.0.0
-          $assembly = "$base.0"
+          # Base numeric version for Assembly/File versions
+          $base = $version.Split("-")[0]   # 1.4.0
+          if ($base -notmatch "^\d+\.\d+\.\d+$") {
+            throw "Base version must be MAJOR.MINOR.PATCH (e.g., 1.4.0). Got: $base (from tag $tag)"
+          }
 
-          "tag=$tag"           | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "version=$version"   | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "base=$base"         | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "assembly=$assembly" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          # AssemblyVersion/FileVersion must be numeric (4-part)
+          $assembly = "$base.0"            # 1.4.0.0
+
+          "tag=$tag"                 | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "version=$version"         | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "base=$base"               | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "assembly=$assembly"       | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "prerelease=$isPrerelease" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Guard stable tags must match latest prerelease commit (if prereleases exist)
@@ -69,8 +82,9 @@ jobs:
             exit 0
           }
 
-          # Stable tag (e.g. v1.4.0). If prerelease tags exist for same base (v1.4.0-bN),
-          # require this stable tag to point to the same commit as the highest bN.
+          # Stable tag (e.g., v1.4.0).
+          # If prerelease tags exist for the same base (v1.4.0-bN),
+          # require the stable tag to point to the same commit as the highest bN.
           $pattern = "v$base-b*"
           $preTags = @(git tag -l $pattern)
 
@@ -79,13 +93,16 @@ jobs:
             exit 0
           }
 
-          # Parse bN and select max N (supports v1.4.0-b1, v1.4.0-b2, ...)
           $maxN = -1
           $maxTag = $null
+
           foreach ($t in $preTags) {
             if ($t -match "^v$([regex]::Escape($base))-b(\d+)$") {
               $n = [int]$Matches[1]
-              if ($n -gt $maxN) { $maxN = $n; $maxTag = $t }
+              if ($n -gt $maxN) {
+                $maxN = $n
+                $maxTag = $t
+              }
             }
           }
 
