@@ -148,9 +148,29 @@ namespace LogViewer
 
         private void UpdateTitle()
         {
-            Version? version = Assembly.GetExecutingAssembly().GetName().Version;
+            string version = GetDisplayVersion();
             string buildType = GetBuildType();
             this.Text = $"Log viewer '{version}' ({buildType})";
+        }
+
+
+        private static string GetDisplayVersion()
+        {
+            var asm = Assembly.GetExecutingAssembly();
+
+            // Preferred: InformationalVersion (supports prerelease like 3.9.0-b3)
+            var info = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            if (!string.IsNullOrWhiteSpace(info))
+            {
+                // Sometimes InformationalVersion can contain extra metadata like "+sha.abcdef".
+                // If you want the UI to display only the SemVer portion, strip build metadata.
+                int plus = info.IndexOf('+');
+                return plus >= 0 ? info.Substring(0, plus) : info;
+            }
+
+            // Fallback: Assembly version (numeric)
+            var v = asm.GetName().Version;
+            return v?.ToString() ?? "unknown";
         }
 
         public static string GetBuildType()

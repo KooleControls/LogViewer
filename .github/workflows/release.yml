@@ -64,18 +64,23 @@ jobs:
           # AssemblyVersion/FileVersion must be numeric (4-part)
           $assembly = "$base.0"            # 1.4.0.0
 
-          "tag=$tag"                 | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "version=$version"         | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "base=$base"               | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "assembly=$assembly"       | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "prerelease=$isPrerelease" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          # IMPORTANT: outputs are strings; keep booleans lowercase for reliable action input parsing
+          $pr = $isPrerelease.ToString().ToLowerInvariant()
+          $mkLatest = (!$isPrerelease).ToString().ToLowerInvariant()
+
+          "tag=$tag"               | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "version=$version"       | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "base=$base"             | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "assembly=$assembly"     | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "prerelease=$pr"         | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "make_latest=$mkLatest"  | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Guard stable tags must match latest prerelease commit (if prereleases exist)
         shell: pwsh
         run: |
           $tag = "${{ steps.ver.outputs.tag }}"
           $base = "${{ steps.ver.outputs.base }}"
-          $isPrerelease = "${{ steps.ver.outputs.prerelease }}" -eq "True"
+          $isPrerelease = "${{ steps.ver.outputs.prerelease }}" -eq "true"
 
           if ($isPrerelease) {
             Write-Output "Prerelease tag ($tag): guard not applicable."
@@ -99,10 +104,7 @@ jobs:
           foreach ($t in $preTags) {
             if ($t -match "^v$([regex]::Escape($base))-b(\d+)$") {
               $n = [int]$Matches[1]
-              if ($n -gt $maxN) {
-                $maxN = $n
-                $maxTag = $t
-              }
+              if ($n -gt $maxN) { $maxN = $n; $maxTag = $t }
             }
           }
 
@@ -134,7 +136,8 @@ jobs:
             /p:Version="${{ steps.ver.outputs.version }}" `
             /p:AssemblyVersion="${{ steps.ver.outputs.assembly }}" `
             /p:FileVersion="${{ steps.ver.outputs.assembly }}" `
-            /p:InformationalVersion="${{ steps.ver.outputs.version }}"
+            /p:InformationalVersion="${{ steps.ver.outputs.version }}" `
+            /p:ContinuousIntegrationBuild=true
 
       - name: Publish (Portable)
         shell: pwsh
@@ -143,7 +146,8 @@ jobs:
             /p:Version="${{ steps.ver.outputs.version }}" `
             /p:AssemblyVersion="${{ steps.ver.outputs.assembly }}" `
             /p:FileVersion="${{ steps.ver.outputs.assembly }}" `
-            /p:InformationalVersion="${{ steps.ver.outputs.version }}"
+            /p:InformationalVersion="${{ steps.ver.outputs.version }}" `
+            /p:ContinuousIntegrationBuild=true
 
       - name: Create zip archive (Portable)
         id: zip
@@ -160,6 +164,7 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
           prerelease: ${{ steps.ver.outputs.prerelease }}
+          make_latest: ${{ steps.ver.outputs.make_latest }}
           files: ${{ steps.zip.outputs.zip }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
