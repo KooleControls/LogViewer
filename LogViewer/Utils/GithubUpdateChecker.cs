@@ -17,26 +17,27 @@ namespace LogViewer.Utils
         {
             _owner = owner;
             _repo = repo;
-
-            // Initialize the Octokit GitHubClient
-            _client = new GitHubClient(new Octokit.ProductHeaderValue(repo));
+            _client = new GitHubClient(new ProductHeaderValue(repo));
         }
 
-        public async Task<Version> GetLatestVersionAsync()
+        public async Task<AppVersion> GetLatestStableVersionAsync()
         {
-            // Fetch the latest release from the GitHub repository
-            var release = await _client.Repository.Release.GetLatest(_owner, _repo);
+            // Ordered newest-first by GitHub API/Octokit
+            var releases = await _client.Repository.Release.GetAll(_owner, _repo);
 
-            if (release == null || string.IsNullOrWhiteSpace(release.TagName))
-                throw new InvalidOperationException("Failed to fetch the latest release information.");
+            var stable = releases.FirstOrDefault(r =>
+                r != null &&
+                !r.Prerelease &&
+                !string.IsNullOrWhiteSpace(r.TagName) &&
+                AppVersion.TryParse(r.TagName, out _));
 
-            // Trim 'v' prefix from the tag name if present
-            var versionString = release.TagName.TrimStart('v');
+            if (stable == null)
+                throw new InvalidOperationException("No stable (non-prerelease) release found.");
 
-            if (!Version.TryParse(versionString, out var latestVersion))
-                throw new InvalidOperationException($"The latest tag '{release.TagName}' is not a valid version.");
+            if (!AppVersion.TryParse(stable.TagName, out var latest))
+                throw new InvalidOperationException($"Stable tag '{stable.TagName}' is not a valid version.");
 
-            return latestVersion;
+            return latest;
         }
     }
 }

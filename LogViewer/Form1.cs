@@ -91,35 +91,35 @@ namespace LogViewer
             _ = CheckForUpdates();
         }
 
-        private async Task<bool> CheckForApplicationUpdates()
+        private async Task<AppVersion?> CheckForApplicationUpdates()
         {
-            Version? version = Assembly.GetExecutingAssembly().GetName().Version;
+            AppVersion version = ApplicationIdentity.GetAppVersion();
             var checker = new GithubUpdateChecker("KooleControls", "LogViewer");
-            var latestVersion = await checker.GetLatestVersionAsync();
-            return latestVersion > version;
+            var latestVersion = await checker.GetLatestStableVersionAsync();
+            return latestVersion.BaseVersion > version.BaseVersion ? latestVersion : null;
         }
 
         private async Task CheckForUpdates()
         {
             toolStripStatusLabel1.Text = "Checking for application updates";
-            bool applicationUpdateAvailable = await CheckForApplicationUpdates();
-            if (applicationUpdateAvailable)
+            var latestVersion = await CheckForApplicationUpdates();
+            if (latestVersion == null)
             {
-                toolStripStatusLabel1.Text = $"New application version available";
-                toolStripStatusLabel1.IsLink = true;
-                toolStripStatusLabel1.Click += (sender, e) =>
-                {
-                    var url = $"https://github.com/KooleControls/LogViewer/releases";
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = url,
-                        UseShellExecute = true
-                    });
-                };
+                toolStripStatusLabel1.Text = "Up-to-date";
                 return;
             }
-
-            toolStripStatusLabel1.Text = "Up-to-date";
+            
+            toolStripStatusLabel1.Text = $"New application available {latestVersion.ToString()}";
+            toolStripStatusLabel1.IsLink = true;
+            toolStripStatusLabel1.Click += (sender, e) =>
+            {
+                var url = $"https://github.com/KooleControls/LogViewer/releases";
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                });
+            };
         }
 
         private void UpdateMenu(LogViewerConfig config)
@@ -148,42 +148,23 @@ namespace LogViewer
 
         private void UpdateTitle()
         {
-            string version = GetDisplayVersion();
-            string buildType = GetBuildType();
-            this.Text = $"Log viewer '{version}' ({buildType})";
-        }
+            AppVersion version = ApplicationIdentity.GetAppVersion();
+            
 
-
-        private static string GetDisplayVersion()
-        {
-            var asm = Assembly.GetExecutingAssembly();
-
-            // Preferred: InformationalVersion (supports prerelease like 3.9.0-b3)
-            var info = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-            if (!string.IsNullOrWhiteSpace(info))
-            {
-                // Sometimes InformationalVersion can contain extra metadata like "+sha.abcdef".
-                // If you want the UI to display only the SemVer portion, strip build metadata.
-                int plus = info.IndexOf('+');
-                return plus >= 0 ? info.Substring(0, plus) : info;
-            }
-
-            // Fallback: Assembly version (numeric)
-            var v = asm.GetName().Version;
-            return v?.ToString() ?? "unknown";
-        }
-
-        public static string GetBuildType()
-        {
 #if DEBUG
-            return "DEBUG";
-#elif RELEASE
-            return "RELEASE";
+            this.Text = $"Log viewer (DEBUG)";
 #elif DEMO
-            return "DEMO";
+            if (version.IsPrerelease)
+                this.Text = $"Log viewer '{version}' (DEMO, PRE-RELEASE)";   
+            else
+                this.Text = $"Log viewer '{version}' (DEMO)";   
 #else
-            return "UNKNOWN";
+            if (version.IsPrerelease)
+                this.Text = $"Log viewer '{version}' (PRE-RELEASE)";   
+            else
+                this.Text = $"Log viewer '{version}'";   
 #endif
+
         }
     }
 }
