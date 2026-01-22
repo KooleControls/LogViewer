@@ -121,6 +121,7 @@ namespace LogViewer
 
             toolStripStatusLabel1.Text = "Up-to-date";
         }
+
         private void UpdateMenu(LogViewerConfig config)
         {
             menuStrip1.Items.Clear();

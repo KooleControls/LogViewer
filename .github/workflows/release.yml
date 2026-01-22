@@ -3,89 +3,146 @@ name: Build and Release Application Files
 on:
   push:
     tags:
-      - 'v*'  # Trigger on version tags like v1.0.0
+      - "v*"
+
+permissions:
+  contents: write # required for creating releases
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      with:
-        submodules: true
-        fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
 
-    - name: Install Visual Studio Build Tools
-      uses: microsoft/setup-msbuild@v1
-      with:
-        vs-version: latest
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.x"
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '8.x'
-        
-    - name: Extract Version
-      id: get_version
-      uses: battila7/get-version-action@v2.2.1
+      # Optional. Keep only if you actually call msbuild.exe directly.
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
 
-    - name: Set project version
-      id: set_version
-      uses: vers-one/dotnet-project-version-updater@v1.6
-      with:
-        file: "LogViewer/LogViewer.csproj"
-        version: ${{ steps.get_version.outputs.version-without-v }}
-        
-    - name: Add Azure DevOps feed with PAT
-      run: |
-        dotnet nuget add source "https://pkgs.dev.azure.com/koolecontrols/_packaging/koolecontrols/nuget/v3/index.json" `
-          --name "KooleControls" `
-          --username "AzureDevOps" `
-          --password "${{ secrets.AZURE_ARTIFACTS_PAT }}" `
-          --store-password-in-clear-text `
-          --configfile "$env:APPDATA/NuGet/NuGet.config"
+      - name: Add Azure DevOps feed with PAT
+        shell: pwsh
+        run: |
+          dotnet nuget add source "https://pkgs.dev.azure.com/koolecontrols/_packaging/koolecontrols/nuget/v3/index.json" `
+            --name "KooleControls" `
+            --username "AzureDevOps" `
+            --password "${{ secrets.AZURE_ARTIFACTS_PAT }}" `
+            --store-password-in-clear-text
 
-    - name: Restore dependencies
-      run: dotnet restore "LogViewer/LogViewer.csproj"
+      - name: Derive version info from tag
+        id: ver
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"         # v1.4.0-b1 or v1.4.0
+          if (-not $tag.StartsWith("v")) { throw "Tag must start with 'v' (e.g., v1.4.0 or v1.4.0-b1). Got: $tag" }
 
-    - name: Restore dependencies
-      run: dotnet restore "LogViewer/LogViewer.csproj" --configfile nuget.config
+          $version = $tag.Substring(1)            # 1.4.0-b1 or 1.4.0
+          $isPrerelease = $version.Contains("-")
 
-    - name: Build solution
-      run: dotnet build "LogViewer/LogViewer.csproj" --configuration Release
+          $base = $version.Split("-")[0]          # 1.4.0
+          # AssemblyVersion/FileVersion must be numeric: 1.4.0.0
+          $assembly = "$base.0"
 
-    - name: Publish the application (Portable)
-      run: dotnet publish "LogViewer/LogViewer.csproj" -c Release -o ./publish/portable
+          "tag=$tag"           | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "version=$version"   | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "base=$base"         | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "assembly=$assembly" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "prerelease=$isPrerelease" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
-    - name: Create zip archive (Portable)
-      run: |
-        $tag = "${{ github.ref_name }}"
-        $zipName = "LogViewer_Portable_$tag.zip"
-        Write-Output "Creating $zipName..."
-        powershell Compress-Archive -Path ./publish/portable/* -DestinationPath ./$zipName
+      - name: Guard stable tags must match latest prerelease commit (if prereleases exist)
+        shell: pwsh
+        run: |
+          $tag = "${{ steps.ver.outputs.tag }}"
+          $base = "${{ steps.ver.outputs.base }}"
+          $isPrerelease = "${{ steps.ver.outputs.prerelease }}" -eq "True"
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        #body_path: notes/${{ github.ref_name }}.md  # Reference the correct release notes file based on the tag
-        draft: false
-        prerelease: false
+          if ($isPrerelease) {
+            Write-Output "Prerelease tag ($tag): guard not applicable."
+            exit 0
+          }
 
-    - name: Upload Portable Version
-      id: upload-release-asset-portable
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./LogViewer_Portable_${{ github.ref_name }}.zip
-        asset_name: LogViewer_Portable_${{ github.ref_name }}.zip
-        asset_content_type: application/zip
-        label: "LogViewer Portable Version"
+          # Stable tag (e.g. v1.4.0). If prerelease tags exist for same base (v1.4.0-bN),
+          # require this stable tag to point to the same commit as the highest bN.
+          $pattern = "v$base-b*"
+          $preTags = @(git tag -l $pattern)
 
+          if ($preTags.Count -eq 0) {
+            Write-Output "No prerelease tags found for $base. Stable release allowed."
+            exit 0
+          }
+
+          # Parse bN and select max N (supports v1.4.0-b1, v1.4.0-b2, ...)
+          $maxN = -1
+          $maxTag = $null
+          foreach ($t in $preTags) {
+            if ($t -match "^v$([regex]::Escape($base))-b(\d+)$") {
+              $n = [int]$Matches[1]
+              if ($n -gt $maxN) { $maxN = $n; $maxTag = $t }
+            }
+          }
+
+          if (-not $maxTag) {
+            Write-Output "Prerelease tags exist but none match v$base-bN exactly. Tags: $($preTags -join ', '). Stable release allowed."
+            exit 0
+          }
+
+          $latestPreSha = (git rev-list -n 1 $maxTag).Trim()
+          $stableSha = "${{ github.sha }}".Trim()
+
+          Write-Output "Latest prerelease tag for $base is $maxTag at $latestPreSha"
+          Write-Output "Stable tag $tag points to $stableSha"
+
+          if ($latestPreSha -ne $stableSha) {
+            throw "Guard failed: Stable tag $tag must point to the same commit as latest prerelease $maxTag. Tag the SAME commit, then push v$base."
+          }
+
+          Write-Output "Guard passed: stable tag matches latest prerelease commit."
+
+      - name: Restore
+        shell: pwsh
+        run: dotnet restore "LogViewer/LogViewer.csproj"
+
+      - name: Build
+        shell: pwsh
+        run: |
+          dotnet build "LogViewer/LogViewer.csproj" -c Release --no-restore `
+            /p:Version="${{ steps.ver.outputs.version }}" `
+            /p:AssemblyVersion="${{ steps.ver.outputs.assembly }}" `
+            /p:FileVersion="${{ steps.ver.outputs.assembly }}" `
+            /p:InformationalVersion="${{ steps.ver.outputs.version }}"
+
+      - name: Publish (Portable)
+        shell: pwsh
+        run: |
+          dotnet publish "LogViewer/LogViewer.csproj" -c Release -o ./publish/portable --no-build `
+            /p:Version="${{ steps.ver.outputs.version }}" `
+            /p:AssemblyVersion="${{ steps.ver.outputs.assembly }}" `
+            /p:FileVersion="${{ steps.ver.outputs.assembly }}" `
+            /p:InformationalVersion="${{ steps.ver.outputs.version }}"
+
+      - name: Create zip archive (Portable)
+        id: zip
+        shell: pwsh
+        run: |
+          $tag = "${{ steps.ver.outputs.tag }}"
+          $zipName = "LogViewer_Portable_$tag.zip"
+          Compress-Archive -Path ./publish/portable/* -DestinationPath ./$zipName -Force
+          "zip=$zipName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Create GitHub Release + upload asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          prerelease: ${{ steps.ver.outputs.prerelease }}
+          files: ${{ steps.zip.outputs.zip }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
