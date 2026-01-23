@@ -87,7 +87,7 @@ namespace LogViewer.Controls
 
             checkBoxRequireGateways.CheckedChanged += (s, e) => LoadObjectItemsForResort(resortsManager.SelectedItem, textBoxSearch.Text);
 
-            dateTimePickerFrom.Value = DateTime.Parse("23-1-2026 06:31:00"); //DateTime.Now.Date;
+            dateTimePickerFrom.Value = DateTime.Now.Date;
             dateTimePickerUntill.Value = DateTime.Now.Date + TimeSpan.FromDays(1);
 
             var clientCredentialsDialog = new DialogClientCredentialsSource();

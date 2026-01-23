@@ -1,18 +1,8 @@
-﻿using DevExpress.Data.Svg;
-using KC.InternalApi.Model;
-using KC.InternalApiClient;
+﻿using KC.InternalApiClient;
 using KC.InternalApiClient.Model.Exceptions;
-using KCObjectsStandard.Data.Api.KC;
-using KCObjectsStandard.Data.KC.Api;
 using LogViewer.Devices.Gateway;
 using LogViewer.Logging;
-using Microsoft.VisualBasic.Logging;
-using Octokit;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 namespace LogViewer.Providers.API
 {
@@ -60,7 +50,7 @@ namespace LogViewer.Providers.API
             return log;
         }
 
-        
+
 
         delegate Task<List<LogEntry>> GetPageDelegate(int page, CancellationToken token);
 
@@ -127,8 +117,12 @@ namespace LogViewer.Providers.API
                 $"TimeStamp<:{until:s}"  // ISO 8601 format
             ];
 
+            List<string> sort = [
+                "Id"
+            ];
+
             var stopwatch = Stopwatch.StartNew();
-            var apiResult = await client.DeviceApi.Data.GetAllAsync(page, 25, filters, null, token);
+            var apiResult = await client.DeviceApi.Data.GetAllAsync(page, 25, filters, sort, token);
             stopwatch.Stop();
             OnResponseTimeReported?.Invoke(this, stopwatch.Elapsed);
             token.ThrowIfCancellationRequested();
