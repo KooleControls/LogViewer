@@ -60,7 +60,8 @@ namespace LogViewer
                 new HvacMapper(),
                 new SmarthomeMapper(),
                 new GatewayGpioMapper(),
-                new UnknownMapper(),
+                new HiddenCodesMapper(),
+                new ConnectionMapper(),
             };
 
             traceManager = new TraceManager(scopeController, mappers);
@@ -138,12 +139,16 @@ namespace LogViewer
         {
             scopeController.Settings.SetHorizontal(appContext.ScopeViewContext.StartDate, appContext.ScopeViewContext.EndDate);
             traceManager.LoadAll(appContext.LogCollection.Entries);
+            scopeController.RedrawAll();
+
         }
 
         private void AppendLiveEntry(LogEntry entry)
         {
             appContext.LogCollection.Entries.Add(entry);
             traceManager.Append(entry);
+
+            scopeController.RedrawAll();
         }
 
         private void UpdateTitle()

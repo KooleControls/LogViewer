@@ -10,10 +10,10 @@ namespace LogViewer.Mapping.Mappers
 {
     public class SmarthomeMapper : ITraceMapper
     {
-        public void Map(LogEntry entry, ITraceBuilder builder)
+        public bool Map(LogEntry entry, ITraceBuilder builder)
         {
             if (entry.DeviceType != DeviceType.SmartHome)
-                return;
+                return false;
 
             var id = entry.DeviceId;
             var code = entry.AsGatewayLogCode();
@@ -22,16 +22,17 @@ namespace LogViewer.Mapping.Mappers
             {
                 case GatewayLogCodes.SmartHomeStateChanged:
                     MapSmarthomeManager(builder, entry, id);
-                    break;
+                    return true;
 
                 case GatewayLogCodes.HeatmanagerStateChanged:
                     MapHeatManager(builder, entry, id);
-                    break;
+                    return true;
 
                 case GatewayLogCodes.CMN_ModbusError:
                     MapModbusError(builder, entry, id);
-                    break;
+                    return true;
             }
+            return false;
         }
 
         private void MapSmarthomeManager(ITraceBuilder builder, LogEntry entry, int id)

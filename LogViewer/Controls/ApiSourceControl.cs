@@ -5,6 +5,7 @@ using LogViewer.Config.Models;
 using LogViewer.Controls.Helpers;
 using LogViewer.Providers.API;
 using Microsoft.Extensions.Caching.Hybrid;
+using System.Diagnostics;
 using System.Security.Cryptography;
 
 namespace LogViewer.Controls
@@ -86,7 +87,7 @@ namespace LogViewer.Controls
 
             checkBoxRequireGateways.CheckedChanged += (s, e) => LoadObjectItemsForResort(resortsManager.SelectedItem, textBoxSearch.Text);
 
-            dateTimePickerFrom.Value = DateTime.Now.Date;
+            dateTimePickerFrom.Value = DateTime.Parse("23-1-2026 06:31:00"); //DateTime.Now.Date;
             dateTimePickerUntill.Value = DateTime.Now.Date + TimeSpan.FromDays(1);
 
             var clientCredentialsDialog = new DialogClientCredentialsSource();
@@ -220,11 +221,15 @@ namespace LogViewer.Controls
             {
                 await task(cancellationTokenSource.Token);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException ocex)
             {
+                Debug.WriteLine(ocex);
             }
             catch (Exception ex)
             {
+                // Dump all we know in debug
+                Debug.WriteLine(ex);
+
                 MessageBox.Show($"An error occurred:\r\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally

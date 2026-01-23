@@ -9,10 +9,10 @@ namespace LogViewer.Mapping.Mappers
 {
     public class GatewayGpioMapper : ITraceMapper
     {
-        public void Map(LogEntry entry, ITraceBuilder builder)
+        public bool Map(LogEntry entry, ITraceBuilder builder)
         {
             if (entry.DeviceType != DeviceType.Gateway)
-                return;
+                return false;
 
             var code = entry.AsGatewayLogCode();
             var id = entry.DeviceId;
@@ -21,17 +21,18 @@ namespace LogViewer.Mapping.Mappers
             {
                 case GatewayLogCodes.Relais1Changed:
                     MapRelay(builder, entry, id, 1, GatewayLogCodes.Relais1Changed);
-                    break;
+                    return true;
                 case GatewayLogCodes.Relais2Changed:
                     MapRelay(builder, entry, id, 2, GatewayLogCodes.Relais2Changed);
-                    break;
+                    return true;
                 case GatewayLogCodes.Input1Changed:
                     MapInput(builder, entry, id, 1, GatewayLogCodes.Input1Changed);
-                    break;
+                    return true;
                 case GatewayLogCodes.Input2Changed:
                     MapInput(builder, entry, id, 2, GatewayLogCodes.Input2Changed);
-                    break;
+                    return true;
             }
+            return false;
         }
 
         private void MapRelay(ITraceBuilder builder, LogEntry entry, int id, int relayIndex, GatewayLogCodes expectedCode)

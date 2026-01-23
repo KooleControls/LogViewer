@@ -11,10 +11,10 @@ namespace LogViewer.Mapping.Mappers
 {
     public class ThermostatMapper : ITraceMapper
     {
-        public void Map(LogEntry entry, ITraceBuilder builder)
+        public bool Map(LogEntry entry, ITraceBuilder builder)
         {
             if (entry.DeviceType != DeviceType.Thermostat)
-                return;
+                return false;
 
             var id = entry.DeviceId;
             var code = entry.AsGatewayLogCode();
@@ -23,20 +23,21 @@ namespace LogViewer.Mapping.Mappers
             {
                 case GatewayLogCodes.Therm_TempActualChanged:
                     MapActualTemperature(builder, entry, id);
-                    break;
+                    return true;
                 case GatewayLogCodes.Therm_TempSetpointChanged:
                     MapSetpointTemperature(builder, entry, id, code);
-                    break;
+                    return true;
                 case GatewayLogCodes.TempSetpointOverride:
                     MapTempSetpointOverride(builder, entry, id, code);
-                    break;
+                    return true;
                 case GatewayLogCodes.Therm_HeatingRequestChanged:
                     MapHeatingRequest(builder, entry, id);
-                    break;
+                    return true;
                 case GatewayLogCodes.Therm_CoolingRequestChanged:
                     MapCoolingRequest(builder, entry, id);
-                    break;
+                    return true;
             }
+            return false;
         }
 
         private void MapActualTemperature(ITraceBuilder builder, LogEntry entry, int id)

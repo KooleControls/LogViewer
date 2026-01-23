@@ -9,10 +9,10 @@ namespace LogViewer.Mapping.Mappers
 {
     public class HvacMapper : ITraceMapper
     {
-        public void Map(LogEntry entry, ITraceBuilder builder)
+        public bool Map(LogEntry entry, ITraceBuilder builder)
         {
             if (entry.DeviceType != DeviceType.HvacUnit)
-                return;
+                return false;
 
             var id = entry.DeviceId;
             var code = entry.AsGatewayLogCode();
@@ -21,23 +21,24 @@ namespace LogViewer.Mapping.Mappers
             {
                 case GatewayLogCodes.Hvac_ActualTempChanged:
                     MapActualTemp(builder, entry, id);
-                    break;
+                    return true;
                 case GatewayLogCodes.Hvac_SetpointChanged:
                     MapSetpoint(builder, entry, id);
-                    break;
+                    return true;
                 case GatewayLogCodes.Hvac_ModeChanged:
                     MapMode(builder, entry, id);
-                    break;
+                    return true;
                 case GatewayLogCodes.Hvac_HeatingActiveChanged:
                     MapHeatingActive(builder, entry, id);
-                    break;
+                    return true;
                 case GatewayLogCodes.Hvac_CoolingActiveChanged:
                     MapCoolingActive(builder, entry, id);
-                    break;
+                    return true;
                 case GatewayLogCodes.Hvac_FaultCodeChanged:
                     MapFaultCode(builder, entry, id);
-                    break;
+                    return true;
             }
+            return false;
         }
 
         private void MapActualTemp(ITraceBuilder builder, LogEntry entry, int id)

@@ -9,9 +9,9 @@ namespace LogViewer
     internal static class Program
     {
 #if DEBUG
-        private static readonly string _sqLiteCachePath = PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer\\debug\\cache\\cache.sqlite");
+        private static readonly string _sqLiteCachePath = PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer\\cache.sqlite");
 #else
-        private static readonly string _sqLiteCachePath = PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer\\release\\cache\\cache.sqlite");
+        private static readonly string _sqLiteCachePath = PathHelper.NormalizePath("%LOCALAPPDATA%\\LogViewer\\cache.sqlite");
 #endif
 
 

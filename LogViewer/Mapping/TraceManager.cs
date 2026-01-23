@@ -1,6 +1,9 @@
 ﻿using FormsLib.Scope;
 using LogViewer.Logging;
 using LogViewer.Mapping.Interfaces;
+using LogViewer.Mapping.Mappers;
+using LogViewer.Mapping.Models;
+using static FormsLib.Scope.Trace;
 
 namespace LogViewer.Mapping
 {
@@ -29,12 +32,36 @@ namespace LogViewer.Mapping
 
         public void Append(LogEntry entry)
         {
+            bool handled = false;
+
             foreach (var mapper in _mappers)
             {
-                mapper.Map(entry, _registry);
+                handled |= mapper.Map(entry, _registry);
             }
 
-            _scope.RedrawAll();
+            if (!handled)
+            {
+                MapUnhandled(entry, _registry);
+            }
+        }
+
+        public void MapUnhandled(LogEntry entry, ITraceBuilder builder)
+        {
+            var descriptor = new TraceDescriptor
+            {
+                TraceId = "Unknown",
+                Category = "Unknown",
+                EntityId = "Unknown",
+                DrawStyle = DrawStyles.Cross,
+                DrawOption = DrawOptions.DrawNames,
+                BaseColor = Color.Wheat,
+                Source = "UnknownMapper"
+            };
+
+            var trace = builder.GetOrCreate(descriptor);
+            var label = new LinkedLabel(trace.Trace, entry.TimeStamp.Ticks, 1);
+            label.Text = $"{entry.AsGatewayLogCode()?.ToString() ?? entry.LogCode.ToString()}";
+            trace.ScopeController.Labels.Add(label);
         }
 
         public void LoadAll(IEnumerable<LogEntry> entries)
@@ -43,12 +70,8 @@ namespace LogViewer.Mapping
 
             foreach (var entry in entries)
             {
-                foreach (var mapper in _mappers)
-                {
-                    mapper.Map(entry, _registry);
-                }
+                Append(entry);
             }
-            _scope.RedrawAll();
         }
     }
 }
