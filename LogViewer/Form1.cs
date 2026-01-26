@@ -62,6 +62,7 @@ namespace LogViewer
                 new GatewayGpioMapper(),
                 new HiddenCodesMapper(),
                 new ConnectionMapper(),
+                new LegacyIndoorUnitMapper(),
             };
 
             traceManager = new TraceManager(scopeController, mappers);

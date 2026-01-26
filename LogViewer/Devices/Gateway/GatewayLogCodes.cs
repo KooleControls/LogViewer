@@ -107,19 +107,26 @@
         DAI_IndoorUnitIsFaultChanged = 0xA000_0501,
         DAI_IndoorUnitFaultCodeChanged = 0xA000_0502,
         CMN_ModbusError = 0xA000_0600,
-        Hvac_IsFaultChanged = 0xA000_0601,
-        Hvac_FaultCodeChanged = 0xA000_0602,
-        Hvac_SetpointChanged = 0xA000_0603,
-        Hvac_ActualTempChanged = 0xA000_0604,
-        Hvac_ModeChanged = 0xA000_0605,
-        Hvac_OnOffChanged = 0xA000_0606,
-        Hvac_RemoteCTRLChanged = 0xA000_0607,
-        Hvac_HeatingActiveChanged = 0xA000_0608,
-        Hvac_CoolingActiveChanged = 0xA000_0609,
+        CMN_IndoorUnit_IsFaultChanged		= 0xA000_0601,	// [unit no] [error] [=master/slave] 3 bytes
+        CMN_IndoorUnit_FaultCodeChanged		= 0xA000_0602,	// [unit no] [errorCode] [=master/slave] 4 bytes
+        CMN_IndoorUnit_SetpointChanged		= 0xA000_0603,	// [unit no] [setpoint] [did we write or was it a read change] [=master/slave] 5 bytes
+        CMN_IndoorUnit_ActualTempChanged	= 0xA000_0604,	// [unit no] [temperature ] [did we write or was it a read change] [=master/slave] 5 bytes
+        CMN_IndoorUnit_ModeChanged			= 0xA000_0605,	// [unit no] [mode] [did we write or was it a read change] [=master/slave] 5 bytes
+        CMN_IndoorUnit_OnOffChanged			= 0xA000_0606,	// [unit no] [on / off] [did we write or was it a read change] [=master/slave] 5 bytes
+        CMN_IndoorUnit_RemoteCTRLChanged	= 0xA000_0607,	// [unit no] [remote control] [did we write or was it a read change] [=master/slave] 5 bytes
         SYS_JSONLoaded = 0xA000_0700,
         SYS_JSONBackupSettingsLoaded = 0xA000_0701,
         SYS_JSONNoFileDefaultSettingsUsed = 0xA000_0702,
         SYS_JSONSettingsParseError = 0xA000_0703,
         SYS_JSONSettingsParseNULL = 0xA000_0704,
+        Hvac_IsFaultChanged = 0xA000_0801,
+        Hvac_FaultCodeChanged = 0xA000_0802,
+        Hvac_SetpointChanged = 0xA000_0803,
+        Hvac_ActualTempChanged = 0xA000_0804,
+        Hvac_ModeChanged = 0xA000_0805,
+        Hvac_OnOffChanged = 0xA000_0806,
+        Hvac_RemoteCTRLChanged = 0xA000_0807,
+        Hvac_HeatingActiveChanged = 0xA000_0808,
+        Hvac_CoolingActiveChanged = 0xA000_0809,
     }
 }

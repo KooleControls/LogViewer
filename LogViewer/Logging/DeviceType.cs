@@ -7,5 +7,6 @@
         Thermostat,
         HvacUnit,
         Gateway,
+        LegacyIndoorUnit,
     }
 }

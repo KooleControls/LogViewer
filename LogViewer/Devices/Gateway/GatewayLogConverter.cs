@@ -134,6 +134,21 @@ namespace LogViewer.Devices.Gateway
                     logEntry.Measurement = data[3];
                     break;
 
+                case GatewayLogCodes.CMN_IndoorUnit_ActualTempChanged:
+                case GatewayLogCodes.CMN_IndoorUnit_SetpointChanged:
+                    logEntry.DeviceType = DeviceType.LegacyIndoorUnit;
+                    logEntry.DeviceId = data[3];
+                    logEntry.Measurement = (float)BitConverter.ToUInt16(data, 4) / 10f;
+                    break;
+
+                case GatewayLogCodes.CMN_IndoorUnit_ModeChanged:
+                case GatewayLogCodes.CMN_IndoorUnit_FaultCodeChanged:
+                case GatewayLogCodes.CMN_IndoorUnit_OnOffChanged:
+                    logEntry.DeviceType = DeviceType.LegacyIndoorUnit;
+                    logEntry.DeviceId = data[3];
+                    logEntry.Measurement = BitConverter.ToUInt16(data, 4);
+                    break;
+
                 case GatewayLogCodes.Hvac_IsFaultChanged:
                     logEntry.DeviceType = DeviceType.HvacUnit;
                     logEntry.DeviceId = data[3];
