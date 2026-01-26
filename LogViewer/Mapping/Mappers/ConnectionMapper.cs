@@ -30,9 +30,9 @@ namespace LogViewer.Mapping.Mappers
         {
             var descriptor = new TraceDescriptor
             {
-                TraceId = $"ConectionServer",
+                TraceId = $"ConnectionServer",
                 Category = "State",
-                EntityId = $"ConectionServer",
+                EntityId = $"ConnectionServer",
                 DrawStyle = DrawStyles.State,
                 DrawOption = DrawOptions.DrawNames | DrawOptions.ExtendEnd,
                 BaseColor = Color.FromArgb(unchecked((int)0xFF008FFF)),
