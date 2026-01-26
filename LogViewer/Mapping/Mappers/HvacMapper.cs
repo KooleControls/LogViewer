@@ -87,7 +87,7 @@ namespace LogViewer.Mapping.Mappers
                 1.0 => "Heating",
                 2.0 => "Cooling",
                 3.0 => "Auto",
-                _ => "Unknown"
+                _ => $"Unknown ({mode})" 
             };
 
             var descriptor = new TraceDescriptor

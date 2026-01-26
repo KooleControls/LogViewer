@@ -44,7 +44,7 @@ namespace LogViewer.Mapping.Mappers
 
             trace.Trace.Points.Add(new PointD(
                 entry.TimeStamp.Ticks,
-                entry.Measurement ?? 0));
+                connected ? 1 : 0));
         }
 
 
