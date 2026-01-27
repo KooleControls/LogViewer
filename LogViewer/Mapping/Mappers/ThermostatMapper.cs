@@ -103,7 +103,7 @@ namespace LogViewer.Mapping.Mappers
         {
             var descriptor = new TraceDescriptor
             {
-                TraceId = $"THR{id}_HeatingReq",
+                TraceId = $"THR{id}_HeatReq",
                 Category = "State",
                 EntityId = $"THR:{id}",
                 DrawStyle = DrawStyles.State,
@@ -123,7 +123,7 @@ namespace LogViewer.Mapping.Mappers
         {
             var descriptor = new TraceDescriptor
             {
-                TraceId = $"THR{id}_CoolingReq",
+                TraceId = $"THR{id}_CoolReq",
                 Category = "State",
                 EntityId = $"THR:{id}",
                 DrawStyle = DrawStyles.State,

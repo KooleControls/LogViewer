@@ -51,9 +51,9 @@ namespace LogViewer.Mapping.Mappers
 
             var descriptor = new TraceDescriptor
             {
-                TraceId = $"SHM{id}_Smarthome",
+                TraceId = $"Smarthome",
                 Category = "State",
-                EntityId = $"SHM:{id}",
+                EntityId = $"Smarthome",
                 DrawStyle = DrawStyles.State,
                 DrawOption = DrawOptions.DrawNames | DrawOptions.ExtendEnd,
                 BaseColor = Color.FromArgb(unchecked((int)0xFF1FFF53)),
@@ -85,9 +85,9 @@ namespace LogViewer.Mapping.Mappers
 
             var descriptor = new TraceDescriptor
             {
-                TraceId = $"SHM{id}_HeatMan",
+                TraceId = $"HeatManager",
                 Category = "State",
-                EntityId = $"SHM:{id}",
+                EntityId = $"HeatManager",
                 DrawStyle = DrawStyles.State,
                 DrawOption = DrawOptions.DrawNames | DrawOptions.ExtendEnd,
                 BaseColor = Color.FromArgb(unchecked((int)0xFF18CC43)),
@@ -139,9 +139,9 @@ namespace LogViewer.Mapping.Mappers
 
             var descriptor = new TraceDescriptor
             {
-                TraceId = $"SHM{id}_ModbusError",
+                TraceId = $"Modbus",
                 Category = "Modbus Errors",
-                EntityId = $"SHM:{id}",
+                EntityId = $"Modbus",
                 DrawStyle = DrawStyles.State,
                 DrawOption = DrawOptions.DrawNames | DrawOptions.ExtendEnd,
                 BaseColor = Color.FromArgb(unchecked((int)0xFFFF0000)),
