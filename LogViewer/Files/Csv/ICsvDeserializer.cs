@@ -1,16 +1,10 @@
 ﻿using LogViewer.AppContext;
-using LogViewer.Logging;
 
-namespace LogViewer.Serializers.Csv
+namespace LogViewer.Files.Csv
 {
-    public interface ICsvDeseralizer
+    public interface ICsvDeserializer
     {
         LogViewerContext Deserialize(StreamReader reader);
     }
 }
-
-
-
-
-
 

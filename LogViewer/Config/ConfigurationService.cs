@@ -1,8 +1,14 @@
-﻿using LogViewer.Config.Helpers;
+﻿using LogViewer.AppContext;
+using LogViewer.Config.Helpers;
 using LogViewer.Config.Mergers;
 using LogViewer.Config.Models;
-using LogViewer.Serializers.Yaml;
+using LogViewer.Files.Core;
+using LogViewer.Files.Interfaces;
+using LogViewer.Files.Yml;
 using System.Reflection;
+using System.Text;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace LogViewer.Config
 {
@@ -86,6 +92,42 @@ namespace LogViewer.Config
                 return null;
             using var reader = new StreamReader(stream);
             return reader.ReadToEnd();
+        }
+    }
+
+    public static class YamlSerializer
+    {
+        public static bool LoadYaml<T>(string yamlContent, out T result)
+        {
+            var deserializer = new DeserializerBuilder()
+                .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .WithTypeConverter(new ColorTypeConverter())
+                .WithTypeConverter(new ByteArrayHexTypeConverter())
+                //.WithTypeConverter(new LogEntryTypeConverter())
+                .Build();
+            try
+            {
+                result = deserializer.Deserialize<T>(yamlContent);
+                return true;
+            }
+            catch
+            {
+                result = default!;
+                return false;
+            }
+        }
+        public static bool LoadYaml<T>(FileInfo fileInfo, out T result)
+        {
+            try
+            {
+                string content = File.ReadAllText(fileInfo.FullName);
+                return LoadYaml(content, out result);
+            }
+            catch
+            {
+                result = default!;
+                return false;
+            }
         }
     }
 }

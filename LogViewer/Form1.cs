@@ -4,6 +4,11 @@ using LogViewer.AppContext;
 using LogViewer.Config;
 using LogViewer.Config.Models;
 using LogViewer.Controls;
+using LogViewer.Files;
+using LogViewer.Files.Core;
+using LogViewer.Files.Csv;
+using LogViewer.Files.Json;
+using LogViewer.Files.Yml;
 using LogViewer.Logging;
 using LogViewer.Mapping;
 using LogViewer.Mapping.Interfaces;
@@ -15,11 +20,15 @@ namespace LogViewer
 {
     public partial class Form1 : Form
     {
-        private readonly LogViewerContext appContext;
+
+        private LogViewerContext appContext;
+        private FileInfo? currentFile;
+
         private readonly ScopeController scopeController;
         private readonly ConfigurationService configurationService;
         private readonly ApiSourceControl apiSourceControl1;
         private readonly TraceManager traceManager;
+        private readonly LogViewerFileService fileService;
 
         public Form1()
         {
@@ -67,6 +76,17 @@ namespace LogViewer
 
             traceManager = new TraceManager(scopeController, mappers);
 
+            IFileFormatDetector detector = new FileFormatDetector();
+            var registry = new FileImportExportRegistry();
+            registry.AddImporter(new CyamlFileImporter());
+            registry.AddImporter(new YamlFileImporter());
+            registry.AddImporter(new CsvFileImporter());
+            registry.AddImporter(new JsonFileImporter());
+            registry.AddImporter(new GzFileImporter());
+            registry.AddExporter(new YamlFileExporter());
+            registry.AddExporter(new CyamlFileExporter());
+            fileService = new LogViewerFileService(registry, detector);
+
             this.Load += Form1_Load;
 
 #if RELEASE
@@ -91,6 +111,120 @@ namespace LogViewer
             }
 
             _ = CheckForUpdates();
+        }
+
+        private void UpdateMenu(LogViewerConfig config)
+        {
+            menuStrip1.Items.Clear();
+
+            menuStrip1.AddMenuItem("File/New", (menuItem) => NewDocument());
+            menuStrip1.AddMenuItem("File/Open", (menuItem) => LoadFileDialog());
+            menuStrip1.AddMenuItem("File/Save", (menuItem) => SaveFileDialog());
+            menuStrip1.AddMenuItem("File/Close", (menuItem) => this.Close());
+
+            menuStrip1.AddMenuItem("Help", (menuItem) => Help.ShowHelp());
+        }
+
+        private void NewDocument()
+        {
+            currentFile = null;
+            SetContext(new LogViewerContext());
+        }
+
+        private void SetContext(LogViewerContext newContext)
+        {
+            appContext = newContext ?? new LogViewerContext();
+            apiSourceControl1.DataSource = appContext; // important when swapping
+            UpdateLogView();
+        }
+
+        private void LoadFileDialog()
+        {
+            using var dlg = new OpenFileDialog
+            {
+                Title = "Open",
+                Filter =
+                    "Supported (*.yaml;*.yml;*.cyaml;*.json;*.gz;*.csv)|*.yaml;*.yml;*.cyaml;*.json;*.gz;*.csv|" +
+                    "All files (*.*)|*.*",
+                CheckFileExists = true,
+                RestoreDirectory = true,
+            };
+
+            if (dlg.ShowDialog(this) != DialogResult.OK)
+                return;
+
+            var file = new FileInfo(dlg.FileName);
+
+            if (!fileService.TryLoad(file, out var loaded))
+            {
+                MessageBox.Show(this,
+                    "Import failed or no importer registered for this file type.",
+                    "Open failed",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
+
+            currentFile = file;
+            SetContext(loaded);
+        }
+
+        private void SaveFileDialog()
+        {
+            using var dlg = new SaveFileDialog
+            {
+                Title = "Save",
+                Filter =
+                    "YAML (*.yaml)|*.yaml|" +
+                    "Compressed YAML (*.cyaml)|*.cyaml|" +
+                    "All files (*.*)|*.*",
+                AddExtension = true,
+                DefaultExt = "yaml",
+                RestoreDirectory = true,
+                OverwritePrompt = true,
+                FileName = currentFile?.Name ?? "logviewer.yaml",
+            };
+
+            if (dlg.ShowDialog(this) != DialogResult.OK)
+                return;
+
+            var file = new FileInfo(dlg.FileName);
+
+            try
+            {
+                fileService.Save(file, appContext);
+                currentFile = file;
+            }
+            catch (NotSupportedException ex)
+            {
+                MessageBox.Show(this,
+                    ex.Message,
+                    "Save not supported",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this,
+                    ex.Message,
+                    "Save failed",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        private void UpdateLogView()
+        {
+            scopeController.Settings.SetHorizontal(appContext.ScopeViewContext.StartDate, appContext.ScopeViewContext.EndDate);
+            traceManager.LoadAll(appContext.LogCollection.Entries);
+            scopeController.RedrawAll();
+        }
+
+        private void AppendLiveEntry(LogEntry entry)
+        {
+            appContext.LogCollection.Entries.Add(entry);
+            traceManager.Append(entry);
+            scopeController.RedrawAll();
         }
 
         private async Task<AppVersion?> CheckForApplicationUpdates()
@@ -122,34 +256,6 @@ namespace LogViewer
                     UseShellExecute = true
                 });
             };
-        }
-
-        private void UpdateMenu(LogViewerConfig config)
-        {
-            menuStrip1.Items.Clear();
-
-            menuStrip1.AddMenuItem("File/New", (menuItem) => scopeController.ClearData());
-            menuStrip1.AddMenuItem("File/Open", (menuItem) => { AppContextFileStore.LoadLogDialog(appContext); UpdateLogView(); });
-            menuStrip1.AddMenuItem("File/Save", (menuItem) => { AppContextFileStore.SaveLogDialog(appContext); });
-            menuStrip1.AddMenuItem("File/Close", (menuItem) => this.Close());
-
-            menuStrip1.AddMenuItem("Help", (menuItem) => Help.ShowHelp());
-        }
-
-        private void UpdateLogView()
-        {
-            scopeController.Settings.SetHorizontal(appContext.ScopeViewContext.StartDate, appContext.ScopeViewContext.EndDate);
-            traceManager.LoadAll(appContext.LogCollection.Entries);
-            scopeController.RedrawAll();
-
-        }
-
-        private void AppendLiveEntry(LogEntry entry)
-        {
-            appContext.LogCollection.Entries.Add(entry);
-            traceManager.Append(entry);
-
-            scopeController.RedrawAll();
         }
 
         private void UpdateTitle()

@@ -4,7 +4,7 @@ using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
 
 
-namespace LogViewer.Serializers.Yaml
+namespace LogViewer.Files.Yml
 {
     public class ColorTypeConverter : IYamlTypeConverter
     {

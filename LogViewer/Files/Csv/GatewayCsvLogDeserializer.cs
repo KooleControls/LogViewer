@@ -2,13 +2,12 @@
 using LogViewer.AppContext;
 using LogViewer.Devices.Gateway;
 using LogViewer.Logging;
-using LogViewer.Providers.API;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace LogViewer.Serializers.Csv
+namespace LogViewer.Files.Csv
 {
-    public class GatewayCsvLogDeserializer : ICsvDeseralizer
+    public sealed class GatewayCsvLogDeserializer : LogViewer.Files.Csv.ICsvDeserializer
     {
         public LogViewerContext Deserialize(StreamReader reader)
         {
@@ -20,35 +19,31 @@ namespace LogViewer.Serializers.Csv
             while (!reader.EndOfStream)
             {
                 string? line = reader.ReadLine();
-
                 if (line == null)
                     continue;
 
                 if (TryParse(line, out var gatewayLog))
                 {
                     var entry = GatewayLogConverter.FromGatewayLog(gatewayLog);
-
                     if (entry != null)
                     {
                         if (start > gatewayLog.TimeStamp)
-                            start = gatewayLog.TimeStamp.Value;
+                            start = gatewayLog.TimeStamp!.Value;
                         if (end < gatewayLog.TimeStamp)
-                            end = gatewayLog.TimeStamp.Value;
+                            end = gatewayLog.TimeStamp!.Value;
                         collection.Entries.Add(entry);
                     }
                 }
             }
 
             LogViewerContext result = new LogViewerContext();
-            result.LogCollection = collection;  
+            result.LogCollection = collection;
             result.ScopeViewContext.EndDate = end;
             result.ScopeViewContext.StartDate = start;
             return result;
         }
 
-
-
-        bool TryParse(string line, out GatewayLog gatewayLog)
+        private bool TryParse(string line, out GatewayLog gatewayLog)
         {
             gatewayLog = new GatewayLog();
             string[] split = line.Split(';');
@@ -57,19 +52,17 @@ namespace LogViewer.Serializers.Csv
             string xBEEAddress;
             byte[] data;
             string version = "";
-            //TODO: This is a problem, don't know how to fix this...
-
 
             bool timeSucess = false;
 
-            if (timeSucess == false) timeSucess = DateTime.TryParse(split[0], out timestamp);
-            if (timeSucess == false) timeSucess = DateTime.TryParseExact(split[0], "M/d/yyyy hh:mm:ss tt", CultureInfo.InvariantCulture, DateTimeStyles.None, out timestamp);
-            if (timeSucess == false) timeSucess = DateTime.TryParseExact(split[0], "d-M-yyyy HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out timestamp);
+            if (!timeSucess) timeSucess = DateTime.TryParse(split[0], out timestamp);
+            if (!timeSucess) timeSucess = DateTime.TryParseExact(split[0], "M/d/yyyy hh:mm:ss tt", CultureInfo.InvariantCulture, DateTimeStyles.None, out timestamp);
+            if (!timeSucess) timeSucess = DateTime.TryParseExact(split[0], "d-M-yyyy HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out timestamp);
 
             if (timestamp < DateTime.ParseExact("01-01-1980", "d-M-yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None))
                 return false;
 
-            if (timeSucess == false)
+            if (!timeSucess)
                 return false;
 
             Match m = Regex.Match(split[1], @"0x([A-Fa-f\d]+)");
@@ -80,6 +73,7 @@ namespace LogViewer.Serializers.Csv
                 return false;
             if (!int.TryParse(split[2], out int actionCode))
                 return false;
+
             xBEEAddress = split[3];
 
             string[] dataSplit = split[4].Trim(' ').Split(' ');
@@ -89,7 +83,7 @@ namespace LogViewer.Serializers.Csv
                 if (!byte.TryParse(dataSplit[i].Replace("0x", ""), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out data[i]))
                     return false;
 
-            if (split.Length >= 5)
+            if (split.Length >= 6)
                 version = split[5];
 
             gatewayLog.ActionCode = actionCode;
@@ -102,9 +96,4 @@ namespace LogViewer.Serializers.Csv
         }
     }
 }
-
-
-
-
-
 
