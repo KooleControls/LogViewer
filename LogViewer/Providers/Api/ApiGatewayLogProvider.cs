@@ -47,6 +47,7 @@ namespace LogViewer.Providers.API
             LogCollection log = new();
             log.Entries.AddRange(await GetAllAsync(GatewayLogApi_GetPageAsync, token, progressConverter));
             log.Entries.AddRange(await GetAllAsync(DeviceApiData_GetPageAsync, token, progressConverter));
+
             return log;
         }
 
@@ -75,6 +76,12 @@ namespace LogViewer.Providers.API
             {
                 if (ex.InnerException is OperationCanceledException operationCanceledException)
                 {
+                    return logEntries;
+                }
+
+                if (ex.Message == "Access denied")
+                {
+                    // No logs found for the specified criteria
                     return logEntries;
                 }
 
