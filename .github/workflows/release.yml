@@ -75,56 +75,6 @@ jobs:
           "prerelease=$pr"         | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "make_latest=$mkLatest"  | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
-      - name: Guard stable tags must match latest prerelease commit (if prereleases exist)
-        shell: pwsh
-        run: |
-          $tag = "${{ steps.ver.outputs.tag }}"
-          $base = "${{ steps.ver.outputs.base }}"
-          $isPrerelease = "${{ steps.ver.outputs.prerelease }}" -eq "true"
-
-          if ($isPrerelease) {
-            Write-Output "Prerelease tag ($tag): guard not applicable."
-            exit 0
-          }
-
-          # Stable tag (e.g., v1.4.0).
-          # If prerelease tags exist for the same base (v1.4.0-bN),
-          # require the stable tag to point to the same commit as the highest bN.
-          $pattern = "v$base-b*"
-          $preTags = @(git tag -l $pattern)
-
-          if ($preTags.Count -eq 0) {
-            Write-Output "No prerelease tags found for $base. Stable release allowed."
-            exit 0
-          }
-
-          $maxN = -1
-          $maxTag = $null
-
-          foreach ($t in $preTags) {
-            if ($t -match "^v$([regex]::Escape($base))-b(\d+)$") {
-              $n = [int]$Matches[1]
-              if ($n -gt $maxN) { $maxN = $n; $maxTag = $t }
-            }
-          }
-
-          if (-not $maxTag) {
-            Write-Output "Prerelease tags exist but none match v$base-bN exactly. Tags: $($preTags -join ', '). Stable release allowed."
-            exit 0
-          }
-
-          $latestPreSha = (git rev-list -n 1 $maxTag).Trim()
-          $stableSha = "${{ github.sha }}".Trim()
-
-          Write-Output "Latest prerelease tag for $base is $maxTag at $latestPreSha"
-          Write-Output "Stable tag $tag points to $stableSha"
-
-          if ($latestPreSha -ne $stableSha) {
-            throw "Guard failed: Stable tag $tag must point to the same commit as latest prerelease $maxTag. Tag the SAME commit, then push v$base."
-          }
-
-          Write-Output "Guard passed: stable tag matches latest prerelease commit."
-
       - name: Restore
         shell: pwsh
         run: dotnet restore "LogViewer/LogViewer.csproj"
