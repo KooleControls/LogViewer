@@ -72,6 +72,7 @@ namespace LogViewer
                 new HiddenCodesMapper(),
                 new ConnectionMapper(),
                 new LegacyIndoorUnitMapper(),
+                new GatewayMapper(),
             };
 
             traceManager = new TraceManager(scopeController, mappers);
