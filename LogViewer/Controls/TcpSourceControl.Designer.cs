@@ -52,6 +52,7 @@ namespace LogViewer.Controls
             txtHost.Name = "txtHost";
             txtHost.Size = new Size(260, 23);
             txtHost.TabIndex = 1;
+            txtHost.Text = "192.168.11.39";
             //
             // lblPort
             //
