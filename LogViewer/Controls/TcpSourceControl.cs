@@ -11,11 +11,17 @@ namespace LogViewer.Controls
     /// </summary>
     public partial class TcpSourceControl : UserControl
     {
+        private const int PollIntervalMs = 1000;
+
         private CancellationTokenSource? cancellationTokenSource;
         private Kc2Client? client;
         private State state = State.Disconnected;
+        private int fetchedCount;
 
         public event EventHandler<LogEntry>? OnLogReceived;
+
+        /// <summary>Raised when a fresh connection starts, so the view can be cleared before streaming.</summary>
+        public event EventHandler? OnClearRequested;
 
         public TcpSourceControl()
         {
@@ -91,7 +97,12 @@ namespace LogViewer.Controls
 
             UpdateState(State.Connected);
 
-            var streamer = new DeviceLogStreamer(client, lookBack);
+            // Fresh look-back: clear the view so existing entries don't duplicate.
+            fetchedCount = 0;
+            UpdateInfoLabels();
+            OnClearRequested?.Invoke(this, EventArgs.Empty);
+
+            var streamer = new DeviceLogStreamer(client, lookBack, PollIntervalMs);
             streamer.OnLogReceived += (s, entry) => RaiseLog(entry);
 
             // Stream in the background until cancelled or the connection drops.
@@ -124,7 +135,18 @@ namespace LogViewer.Controls
 
         private void RaiseLog(LogEntry entry)
         {
-            RunOnUi(() => OnLogReceived?.Invoke(this, entry));
+            RunOnUi(() =>
+            {
+                fetchedCount++;
+                UpdateInfoLabels();
+                OnLogReceived?.Invoke(this, entry);
+            });
+        }
+
+        private void UpdateInfoLabels()
+        {
+            lblPollInterval.Text = $"Poll interval: {PollIntervalMs} ms";
+            lblFetched.Text = $"Lines fetched: {fetchedCount}";
         }
 
         private void RunOnUi(Action action)

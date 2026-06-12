@@ -32,6 +32,8 @@ namespace LogViewer.Controls
             lblLookBack = new Label();
             numLookBack = new NumericUpDown();
             btnConnect = new Button();
+            lblPollInterval = new Label();
+            lblFetched = new Label();
             ((System.ComponentModel.ISupportInitialize)numLookBack).BeginInit();
             SuspendLayout();
             //
@@ -108,10 +110,30 @@ namespace LogViewer.Controls
             btnConnect.Text = "Connect";
             btnConnect.UseVisualStyleBackColor = true;
             //
+            // lblPollInterval
+            //
+            lblPollInterval.AutoSize = true;
+            lblPollInterval.Location = new Point(8, 244);
+            lblPollInterval.Name = "lblPollInterval";
+            lblPollInterval.Size = new Size(86, 15);
+            lblPollInterval.TabIndex = 8;
+            lblPollInterval.Text = "Poll interval: -";
+            //
+            // lblFetched
+            //
+            lblFetched.AutoSize = true;
+            lblFetched.Location = new Point(8, 266);
+            lblFetched.Name = "lblFetched";
+            lblFetched.Size = new Size(95, 15);
+            lblFetched.TabIndex = 9;
+            lblFetched.Text = "Lines fetched: 0";
+            //
             // TcpSourceControl
             //
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(lblFetched);
+            Controls.Add(lblPollInterval);
             Controls.Add(btnConnect);
             Controls.Add(numLookBack);
             Controls.Add(lblLookBack);
@@ -137,5 +159,7 @@ namespace LogViewer.Controls
         private Label lblLookBack;
         private NumericUpDown numLookBack;
         private Button btnConnect;
+        private Label lblPollInterval;
+        private Label lblFetched;
     }
 }

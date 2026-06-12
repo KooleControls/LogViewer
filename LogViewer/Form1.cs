@@ -70,6 +70,7 @@ namespace LogViewer
 
             // Device (TCP) → incremental update
             tcpSourceControl1.OnLogReceived += (s, entry) => AppendLiveEntry(entry);
+            tcpSourceControl1.OnClearRequested += (s, e) => ClearLog();
 
             // Mappers
             var mappers = new List<ITraceMapper>
@@ -234,6 +235,13 @@ namespace LogViewer
         {
             appContext.LogCollection.Entries.Add(entry);
             traceManager.Append(entry);
+            scopeController.RedrawAll();
+        }
+
+        private void ClearLog()
+        {
+            appContext.LogCollection.Entries.Clear();
+            traceManager.LoadAll(appContext.LogCollection.Entries);
             scopeController.RedrawAll();
         }
 
