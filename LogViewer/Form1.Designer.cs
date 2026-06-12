@@ -42,6 +42,7 @@ namespace LogViewer
             tabPageTraces = new TabPage();
             traceView1 = new FormsLib.Scope.Controls.TraceView();
             tabPage1 = new TabPage();
+            tabPageDevice = new TabPage();
             statusStrip1 = new StatusStrip();
             toolStripStatusLabel1 = new ToolStripStatusLabel();
             mqttSourceControl1 = new LogViewer.Controls.MqttSourceControl();
@@ -132,6 +133,7 @@ namespace LogViewer
             tabControl1.Controls.Add(tabPageApi);
             tabControl1.Controls.Add(tabPageTraces);
             tabControl1.Controls.Add(tabPage1);
+            tabControl1.Controls.Add(tabPageDevice);
             tabControl1.Dock = DockStyle.Fill;
             tabControl1.Location = new Point(0, 0);
             tabControl1.Name = "tabControl1";
@@ -180,6 +182,16 @@ namespace LogViewer
             tabPage1.TabIndex = 2;
             tabPage1.Text = "Mqtt";
             tabPage1.UseVisualStyleBackColor = true;
+            //
+            // tabPageDevice
+            //
+            tabPageDevice.Location = new Point(4, 24);
+            tabPageDevice.Name = "tabPageDevice";
+            tabPageDevice.Padding = new Padding(3);
+            tabPageDevice.Size = new Size(288, 991);
+            tabPageDevice.TabIndex = 3;
+            tabPageDevice.Text = "Device";
+            tabPageDevice.UseVisualStyleBackColor = true;
             // 
             // statusStrip1
             // 
@@ -245,6 +257,7 @@ namespace LogViewer
         private StatusStrip statusStrip1;
         private ToolStripStatusLabel toolStripStatusLabel1;
         private TabPage tabPage1;
+        private TabPage tabPageDevice;
         private Controls.MqttSourceControl mqttSourceControl1;
     }
 }

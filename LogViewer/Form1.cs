@@ -27,6 +27,7 @@ namespace LogViewer
         private readonly ScopeController scopeController;
         private readonly ConfigurationService configurationService;
         private readonly ApiSourceControl apiSourceControl1;
+        private readonly TcpSourceControl tcpSourceControl1;
         private readonly TraceManager traceManager;
         private readonly LogViewerFileService fileService;
 
@@ -61,6 +62,14 @@ namespace LogViewer
 
             // MQTT → incremental update
             mqttSourceControl1.OnLogReceived += (s, entry) => AppendLiveEntry(entry);
+
+            // Device (TCP) source control
+            tcpSourceControl1 = new TcpSourceControl();
+            tabPageDevice.Controls.Add(tcpSourceControl1);
+            tcpSourceControl1.Dock = DockStyle.Fill;
+
+            // Device (TCP) → incremental update
+            tcpSourceControl1.OnLogReceived += (s, entry) => AppendLiveEntry(entry);
 
             // Mappers
             var mappers = new List<ITraceMapper>

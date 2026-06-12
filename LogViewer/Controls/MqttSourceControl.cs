@@ -40,45 +40,9 @@ namespace LogViewer.Controls
                                     .Select(i => Convert.ToByte(payload.Substring(i, 2), 16))
                                     .ToArray();
 
-            if (buf.Length != 64)
-                return; // malformed or wrong log type
-
-            // ---- Parse log_data_t ----
-            int offset = 0;
-
-            byte code = buf[offset++];
-
-            byte[] owner = buf.Skip(offset).Take(8).ToArray();
-            offset += 8;
-
-            byte[] timestampBytes = buf.Skip(offset).Take(5).ToArray();
-            offset += 5;
-
-            byte actionCode = buf[offset++];
-
-            byte[] data = buf.Skip(offset).Take(46).ToArray();
-            offset += 46;
-
-            byte[] versionArr = buf.Skip(offset).Take(3).ToArray();
-            string version = $"{versionArr[0]}.{versionArr[1]}.{versionArr[2]}";
-
-            // ---- Decode 5-byte timestamp ----
-            DateTime timeStamp = ExtractDateTimeFromKcPacking(timestampBytes);
-
-            // ---- Create GatewayLog ----
-            var log = new GatewayLog(
-                id: null,
-                code: code,
-                timeStamp: timeStamp,
-                data: data,
-                actionCode: actionCode,
-                varVersion: version,
-                gateway: null
-            );
-
-            LogEntry? entry = GatewayLogConverter.FromGatewayLog(log);
+            LogEntry? entry = GatewayLogFrameParser.Parse(buf);
             if (entry == null)
-                return;
+                return; // malformed or wrong log type
 
             OnLogReceived?.Invoke(this, entry);
         }
