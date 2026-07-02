@@ -28,6 +28,7 @@ namespace LogViewer.Controls
         private readonly ControlStateManager controlStateManager;
         private readonly ApiClientProvider apiClientProvider;
         private readonly Button buttonExportResort;
+        private bool isExporting;
 
 
         CancellationTokenSource? cancellationTokenSource;
@@ -47,7 +48,9 @@ namespace LogViewer.Controls
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
                 UseVisualStyleBackColor = true,
             };
-            buttonExportResort.Click += (s, e) => ExportResort();
+            // Tijdens het exporteren wordt deze knop een "Cancel"-knop (niet uitschakelen -> niet in
+            // de controlStateManager-lijst), zodat de gebruiker het proces kan afbreken.
+            buttonExportResort.Click += (s, e) => OnExportButtonClick();
             Controls.Add(buttonExportResort);
             buttonExportResort.BringToFront();
 
@@ -65,7 +68,6 @@ namespace LogViewer.Controls
                 comboBoxResorts,
                 comboBoxOrganisations,
                 buttonSearch,
-                buttonExportResort,
             ]);
 
 
@@ -178,6 +180,17 @@ namespace LogViewer.Controls
         }
 
 
+        // Klik op de export/cancel-knop: tijdens een lopende export fungeert hij als Cancel.
+        private void OnExportButtonClick()
+        {
+            if (isExporting)
+            {
+                cancellationTokenSource?.Cancel();
+                return;
+            }
+            ExportResort();
+        }
+
         // Exporteert het gekozen resort (gedeelde connectie-server instellingen + alle apparaten) naar
         // een .kcresort-bestand voor de KC220 config tool. Haalt voor elk object de gateways op; elke
         // gateway wordt een apparaat (Software ID = Sid, Device ID = GatewayId).
@@ -203,6 +216,11 @@ namespace LogViewer.Controls
                 fileName = dlg.FileName;
             }
 
+            // De export-knop wordt tijdens het exporteren een Cancel-knop.
+            isExporting = true;
+            buttonExportResort.Text = "Cancel";
+            try
+            {
             await RunWithDisabledControlsAsync(async token =>
             {
                 var export = new ResortExport
@@ -267,6 +285,12 @@ namespace LogViewer.Controls
                     $"Exported resort '{resort.Name}' with {export.Devices.Count} device(s) to:\n{fileName}",
                     "Export complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
             });
+            }
+            finally
+            {
+                isExporting = false;
+                buttonExportResort.Text = "Export";
+            }
         }
 
         private static string ExtractHost(string? basePath)
