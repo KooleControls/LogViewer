@@ -263,12 +263,12 @@ namespace LogViewer.Controls
                     await foreach (var gw in gatewaysProvider.GetData(token, null))
                         gateways.Add(gw);
 
-                    bool multiple = gateways.Count > 1;
                     foreach (var gw in gateways)
                     {
                         export.Devices.Add(new ResortExportDevice
                         {
-                            Name = multiple ? $"{obj.Name} - {gw.Name}" : obj.Name,
+                            Name = string.IsNullOrWhiteSpace(gw.Name) ? obj.Name : gw.Name,
+                            Object = obj.Name,   // object-laag: groepeert de gateways onder het object
                             Sid = (int)(gw.Sid ?? 0),
                             DeviceId = (int)(gw.GatewayId ?? 0),
                         });

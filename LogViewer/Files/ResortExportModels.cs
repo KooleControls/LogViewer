@@ -26,7 +26,8 @@ namespace LogViewer.Files
     public class ResortExportDevice
     {
         public string? Name { get; set; }
-        public int Sid { get; set; }        // Software ID  (Gateway.Sid)
-        public int DeviceId { get; set; }   // Device ID    (Gateway.GatewayId)
+        public string? Object { get; set; }   // object (bv. "V006") binnen het resort; groepeert de apparaten
+        public int Sid { get; set; }          // Software ID  (Gateway.Sid)
+        public int DeviceId { get; set; }     // Device ID    (Gateway.GatewayId)
     }
 }
