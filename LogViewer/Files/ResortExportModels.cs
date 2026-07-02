@@ -23,6 +23,15 @@ namespace LogViewer.Files
         public List<ResortExportDevice> Devices { get; set; } = new();
     }
 
+    // Bundel van meerdere resorts (één .kcbundle-bestand, bv. alle resorts van een organisatie).
+    [XmlRoot("KcResortBundle")]
+    public class ResortBundle
+    {
+        [XmlArray("Resorts")]
+        [XmlArrayItem("Resort")]
+        public List<ResortExport> Resorts { get; set; } = new();
+    }
+
     public class ResortExportDevice
     {
         public string? Name { get; set; }
