@@ -78,12 +78,15 @@ namespace LogViewer.Providers.API
                 {
                     return logEntries;
                 }
-
-                if (ex.Message == "Access denied")
+                else if (ex.InnerException is KC.InternalApi.Client.ApiException argExApi)
                 {
-                    // No logs found for the specified criteria
-                    return logEntries;
+                    switch (argExApi.ErrorCode)
+                    {
+                        case 403:
+                            return logEntries; // Suppress error on not updated api's
+                    }
                 }
+
 
                 Debug.WriteLine($"Error occurred during API call: {ex.Message}");
                 throw;
