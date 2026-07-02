@@ -230,7 +230,7 @@ namespace LogViewer.Controls
                 for (int i = 0; i < objects.Count; i++)
                 {
                     token.ThrowIfCancellationRequested();
-                    progressBarManager.Progress?.Report((double)i / Math.Max(1, objects.Count));
+                    (progressBarManager.Progress as IProgress<double>)?.Report((double)i / Math.Max(1, objects.Count));
 
                     var obj = objects[i];
                     if (obj.Id == null)
@@ -257,7 +257,7 @@ namespace LogViewer.Controls
                     }
                 }
 
-                progressBarManager.Progress?.Report(1);
+                (progressBarManager.Progress as IProgress<double>)?.Report(1);
 
                 var serializer = new XmlSerializer(typeof(ResortExport));
                 using (var stream = File.Create(fileName))
