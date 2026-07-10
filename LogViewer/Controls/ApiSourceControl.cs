@@ -8,7 +8,6 @@ using LogViewer.Providers.API;
 using Microsoft.Extensions.Caching.Hybrid;
 using System.Diagnostics;
 using System.Security.Cryptography;
-using System.Xml.Serialization;
 
 namespace LogViewer.Controls
 {
@@ -235,63 +234,6 @@ namespace LogViewer.Controls
             ExportAllResorts();
         }
 
-        // Bouwt de export van één resort (instellingen + alle apparaten via objecten -> gateways).
-        private async Task<ResortExport> BuildResortExportAsync(OrganisationConfig org, Resort resort, CancellationToken token, IProgress<double>? progress)
-        {
-            var export = new ResortExport
-            {
-                Organisation = org.Name,
-                OrganisationHost = ExtractHost(org.BasePath),
-                ResortName = resort.Name,
-                ServerAddress = resort.Settings?.ConnectionServerSettings?.ServerAddress,
-                ComPort = resort.Settings?.ConnectionServerSettings?.ComPort?.ToString(),
-                TrgPort = resort.Settings?.ConnectionServerSettings?.TrgPort?.ToString(),
-                InstallCode = resort.Settings?.InstallCode,
-            };
-            if (apiClient == null || resort.Id == null)
-                return export;
-
-            var objectsProvider = new ApiObjectItemProviderBuilder(apiClient)
-                .ForResort(resort.Id.Value)
-                .WithSortByName()
-                .Build();
-
-            var objects = new List<ObjectItem>();
-            await foreach (var obj in objectsProvider.GetData(token, null))
-                objects.Add(obj);
-
-            for (int i = 0; i < objects.Count; i++)
-            {
-                token.ThrowIfCancellationRequested();
-                progress?.Report((double)i / Math.Max(1, objects.Count));
-
-                var obj = objects[i];
-                if (obj.Id == null)
-                    continue;
-
-                var gatewaysProvider = new ApiGatewayProviderBuilder(apiClient)
-                    .ForObjectItem(obj.Id.Value)
-                    .WithSortByName()
-                    .Build();
-
-                var gateways = new List<Gateway>();
-                await foreach (var gw in gatewaysProvider.GetData(token, null))
-                    gateways.Add(gw);
-
-                foreach (var gw in gateways)
-                {
-                    export.Devices.Add(new ResortExportDevice
-                    {
-                        Name = string.IsNullOrWhiteSpace(gw.Name) ? obj.Name : gw.Name,
-                        Object = obj.Name,   // object-laag: groepeert de gateways onder het object
-                        Sid = (int)(gw.Sid ?? 0),
-                        DeviceId = (int)(gw.GatewayId ?? 0),
-                    });
-                }
-            }
-            return export;
-        }
-
         // Exporteert het gekozen resort naar één .kcresort-bestand voor de KC220 config tool.
         private async void ExportResort()
         {
@@ -316,7 +258,7 @@ namespace LogViewer.Controls
             {
                 dlg.Title = "Export resort";
                 dlg.Filter = "Resort export (*.kcresort)|*.kcresort|XML files (*.xml)|*.xml";
-                dlg.FileName = MakeSafeFileName(resort.Name) + ".kcresort";
+                dlg.FileName = ResortExportService.MakeSafeFileName(resort.Name) + ".kcresort";
                 if (dlg.ShowDialog() != DialogResult.OK)
                     return;
                 fileName = dlg.FileName;
@@ -329,12 +271,9 @@ namespace LogViewer.Controls
             {
                 await RunWithDisabledControlsAsync(async token =>
                 {
-                    var export = await BuildResortExportAsync(org, resort, token, progressBarManager.Progress as IProgress<double>);
-                    (progressBarManager.Progress as IProgress<double>)?.Report(1);
-
-                    var serializer = new XmlSerializer(typeof(ResortExport));
-                    using (var stream = File.Create(fileName))
-                        serializer.Serialize(stream, export);
+                    var export = await ResortExportService.BuildResortExportAsync(apiClient, org, resort, progressBarManager.Progress, token);
+                    ((IProgress<double>)progressBarManager.Progress).Report(1);
+                    ResortExportService.SaveResort(export, fileName);
 
                     MessageBox.Show(
                         $"Exported resort '{resort.Name}' with {export.Devices.Count} device(s) to:\n{fileName}",
@@ -375,7 +314,7 @@ namespace LogViewer.Controls
             {
                 dlg.Title = "Export all resorts of this organisation";
                 dlg.Filter = "Resort bundle (*.kcbundle)|*.kcbundle|XML files (*.xml)|*.xml";
-                dlg.FileName = MakeSafeFileName(org.Name) + ".kcbundle";
+                dlg.FileName = ResortExportService.MakeSafeFileName(org.Name) + ".kcbundle";
                 if (dlg.ShowDialog() != DialogResult.OK)
                     return;
                 fileName = dlg.FileName;
@@ -388,31 +327,11 @@ namespace LogViewer.Controls
             {
                 await RunWithDisabledControlsAsync(async token =>
                 {
-                    var resortProvider = new ApiResortProviderBuilder(apiClient)
-                        .ForOrganization(org.OrganisationId.Value)
-                        .WithSortByName()
-                        .Build();
+                    var bundle = await ResortExportService.BuildBundleAsync(apiClient, org, progressBarManager.Progress, token);
+                    ((IProgress<double>)progressBarManager.Progress).Report(1);
+                    ResortExportService.SaveBundle(bundle, fileName);
 
-                    var resorts = new List<Resort>();
-                    await foreach (var r in resortProvider.GetData(token, null))
-                        resorts.Add(r);
-
-                    var bundle = new ResortBundle();
-                    int totalDevices = 0;
-                    for (int i = 0; i < resorts.Count; i++)
-                    {
-                        token.ThrowIfCancellationRequested();
-                        (progressBarManager.Progress as IProgress<double>)?.Report((double)i / Math.Max(1, resorts.Count));
-                        var export = await BuildResortExportAsync(org, resorts[i], token, null);
-                        bundle.Resorts.Add(export);
-                        totalDevices += export.Devices.Count;
-                    }
-                    (progressBarManager.Progress as IProgress<double>)?.Report(1);
-
-                    var serializer = new XmlSerializer(typeof(ResortBundle));
-                    using (var stream = File.Create(fileName))
-                        serializer.Serialize(stream, bundle);
-
+                    int totalDevices = bundle.Resorts.Sum(r => r.Devices.Count);
                     MessageBox.Show(
                         $"Exported {bundle.Resorts.Count} resort(s) with {totalDevices} device(s) to:\n{fileName}",
                         "Export complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -424,22 +343,6 @@ namespace LogViewer.Controls
                 buttonExportAll.Text = "Export all";
                 buttonExportResort.Enabled = true;
             }
-        }
-
-        private static string ExtractHost(string? basePath)
-        {
-            if (string.IsNullOrWhiteSpace(basePath))
-                return "";
-            try { return new Uri(basePath).Host; } catch { return ""; }
-        }
-
-        private static string MakeSafeFileName(string? name)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-                return "resort";
-            foreach (var c in Path.GetInvalidFileNameChars())
-                name = name.Replace(c, '_');
-            return name;
         }
 
         // Opent de KC220 config tool op het gekozen apparaat: schrijft de verbinding naar een tijdelijk
@@ -465,7 +368,7 @@ namespace LogViewer.Controls
             var export = new ResortExport
             {
                 Organisation = org.Name,
-                OrganisationHost = ExtractHost(org.BasePath),
+                OrganisationHost = ResortExportService.ExtractHost(org.BasePath),
                 ResortName = resort.Name,
                 ServerAddress = resort.Settings?.ConnectionServerSettings?.ServerAddress,
                 ComPort = resort.Settings?.ConnectionServerSettings?.ComPort?.ToString(),
@@ -483,9 +386,7 @@ namespace LogViewer.Controls
             try
             {
                 string temp = Path.Combine(Path.GetTempPath(), "kc220_connect_" + Guid.NewGuid().ToString("N") + ".kcresort");
-                var serializer = new XmlSerializer(typeof(ResortExport));
-                using (var stream = File.Create(temp))
-                    serializer.Serialize(stream, export);
+                ResortExportService.SaveResort(export, temp);
 
                 Process.Start(new ProcessStartInfo(exe, $"/connect \"{temp}\"") { UseShellExecute = false });
             }
