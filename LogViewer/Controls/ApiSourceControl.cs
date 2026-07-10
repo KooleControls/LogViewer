@@ -37,16 +37,14 @@ namespace LogViewer.Controls
 
             // "220 tool" naast de gateway-keuzelijst: opent de KC220 config tool op het gekozen apparaat
             // (schrijft de verbinding naar een tijdelijk .kcresort en start de tool met /connect).
+            // Grootte/positie wordt in OnLoad uitgelijnd op buttonFetch (na DPI-schaling), zodat de knop
+            // een nette kolom vormt met Fetch/Cancel/Search op elke schaalfactor.
             buttonOpen220 = new Button
             {
                 Text = "220 tool",
-                Size = new Size(80, 23),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
                 UseVisualStyleBackColor = true,
             };
-            // Rechteruitlijning met Fetch/Cancel/Search (rechterrand x=233); combo krimpt tot links van de knop.
-            buttonOpen220.Location = new Point(233 - buttonOpen220.Width, comboBoxGateways.Top);
-            comboBoxGateways.Width = buttonOpen220.Left - 6 - comboBoxGateways.Left;
             buttonOpen220.Click += (s, e) => OpenInKc220Tool();
             Controls.Add(buttonOpen220);
             buttonOpen220.BringToFront();
@@ -111,6 +109,18 @@ namespace LogViewer.Controls
 
             var clientCredentialsDialog = new DialogClientCredentialsSource();
             apiClientProvider = new ApiClientProvider(clientCredentialsDialog);
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+
+            // Lijn "220 tool" uit op de Fetch-knop nadat DPI-schaling is toegepast: zelfde grootte en
+            // linker-/rechterrand, zodat 220 tool, Fetch en Cancel een nette verticale kolom vormen.
+            // De gateway-combo krimpt tot links van de knop met een gat van 6px.
+            buttonOpen220.Size = buttonFetch.Size;
+            buttonOpen220.Location = new Point(buttonFetch.Left, comboBoxGateways.Top);
+            comboBoxGateways.Width = buttonOpen220.Left - 6 - comboBoxGateways.Left;
         }
 
 
