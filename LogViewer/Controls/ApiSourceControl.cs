@@ -26,10 +26,7 @@ namespace LogViewer.Controls
         private InternalApiClient? apiClient;
         private readonly ControlStateManager controlStateManager;
         private readonly ApiClientProvider apiClientProvider;
-        private readonly Button buttonExportResort;
-        private readonly Button buttonExportAll;
         private readonly Button buttonOpen220;
-        private bool isExporting;
 
 
         CancellationTokenSource? cancellationTokenSource;
@@ -38,49 +35,18 @@ namespace LogViewer.Controls
         {
             InitializeComponent();
 
-            // "Export" naast de resort-keuzelijst: exporteert het gekozen resort (instellingen + alle
-            // apparaten) naar een .kcresort-bestand dat de KC220 config tool kan importeren.
-            comboBoxResorts.Width = 150;
-            buttonExportResort = new Button
-            {
-                Text = "Export",
-                Location = new Point(comboBoxResorts.Right + 6, comboBoxResorts.Top),
-                Size = new Size(74, 23),
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                UseVisualStyleBackColor = true,
-            };
-            // Tijdens het exporteren wordt deze knop een "Cancel"-knop (niet uitschakelen -> niet in
-            // de controlStateManager-lijst), zodat de gebruiker het proces kan afbreken.
-            buttonExportResort.Click += (s, e) => OnExportButtonClick();
-            Controls.Add(buttonExportResort);
-            buttonExportResort.BringToFront();
-
-            // "Export all" naast de organisatie-keuzelijst: exporteert ALLE resorts van de gekozen
-            // organisatie (met objecten/apparaten) naar één .kcbundle-bestand voor de KC220 config tool.
-            comboBoxOrganisations.Width = 146;
-            buttonExportAll = new Button
-            {
-                Text = "Export all",
-                Location = new Point(comboBoxOrganisations.Right + 6, comboBoxOrganisations.Top),
-                Size = new Size(78, 23),
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                UseVisualStyleBackColor = true,
-            };
-            buttonExportAll.Click += (s, e) => OnExportAllButtonClick();
-            Controls.Add(buttonExportAll);
-            buttonExportAll.BringToFront();
-
             // "220 tool" naast de gateway-keuzelijst: opent de KC220 config tool op het gekozen apparaat
             // (schrijft de verbinding naar een tijdelijk .kcresort en start de tool met /connect).
-            comboBoxGateways.Width = 144;
             buttonOpen220 = new Button
             {
                 Text = "220 tool",
-                Location = new Point(comboBoxGateways.Right + 6, comboBoxGateways.Top),
                 Size = new Size(80, 23),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
                 UseVisualStyleBackColor = true,
             };
+            // Rechteruitlijning met Fetch/Cancel/Search (rechterrand x=233); combo krimpt tot links van de knop.
+            buttonOpen220.Location = new Point(233 - buttonOpen220.Width, comboBoxGateways.Top);
+            comboBoxGateways.Width = buttonOpen220.Left - 6 - comboBoxGateways.Left;
             buttonOpen220.Click += (s, e) => OpenInKc220Tool();
             Controls.Add(buttonOpen220);
             buttonOpen220.BringToFront();
@@ -211,139 +177,6 @@ namespace LogViewer.Controls
             });
         }
 
-
-        // Klik op de export/cancel-knop: tijdens een lopende export fungeert hij als Cancel.
-        private void OnExportButtonClick()
-        {
-            if (isExporting)
-            {
-                cancellationTokenSource?.Cancel();
-                return;
-            }
-            ExportResort();
-        }
-
-        // Klik op de "Export all"-knop: tijdens een lopende export fungeert hij als Cancel.
-        private void OnExportAllButtonClick()
-        {
-            if (isExporting)
-            {
-                cancellationTokenSource?.Cancel();
-                return;
-            }
-            ExportAllResorts();
-        }
-
-        // Exporteert het gekozen resort naar één .kcresort-bestand voor de KC220 config tool.
-        private async void ExportResort()
-        {
-            var org = organisationsManager.SelectedItem;
-            var resort = resortsManager.SelectedItem;
-            if (org == null || resort == null || apiClient == null || resort.Id == null)
-            {
-                MessageBox.Show("Select an organisation and resort first.", "Export resort",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            if (MessageBox.Show(
-                    "Exporting this resort fetches all its objects and gateways from the web API.\n\n" +
-                    "That means many API calls and it can take a while (a minute or more for large resorts).\n\n" +
-                    "Continue?",
-                    "Export resort", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
-                return;
-
-            string fileName;
-            using (var dlg = new SaveFileDialog())
-            {
-                dlg.Title = "Export resort";
-                dlg.Filter = "Resort export (*.kcresort)|*.kcresort|XML files (*.xml)|*.xml";
-                dlg.FileName = ResortExportService.MakeSafeFileName(resort.Name) + ".kcresort";
-                if (dlg.ShowDialog() != DialogResult.OK)
-                    return;
-                fileName = dlg.FileName;
-            }
-
-            isExporting = true;
-            buttonExportResort.Text = "Cancel";
-            buttonExportAll.Enabled = false;
-            try
-            {
-                await RunWithDisabledControlsAsync(async token =>
-                {
-                    var export = await ResortExportService.BuildResortExportAsync(apiClient, org, resort, progressBarManager.Progress, token);
-                    ((IProgress<double>)progressBarManager.Progress).Report(1);
-                    ResortExportService.SaveResort(export, fileName);
-
-                    MessageBox.Show(
-                        $"Exported resort '{resort.Name}' with {export.Devices.Count} device(s) to:\n{fileName}",
-                        "Export complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                });
-            }
-            finally
-            {
-                isExporting = false;
-                buttonExportResort.Text = "Export";
-                buttonExportAll.Enabled = true;
-            }
-        }
-
-        // Exporteert ALLE resorts van de gekozen organisatie (met objecten/apparaten) naar één
-        // .kcbundle-bestand. Scheelt de technicus het per resort exporteren (bv. ~40x voor Roompot).
-        private async void ExportAllResorts()
-        {
-            var org = organisationsManager.SelectedItem;
-            if (org == null || apiClient == null || org.OrganisationId == null)
-            {
-                MessageBox.Show("Select an organisation first (and log in).", "Export all resorts",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            if (MessageBox.Show(
-                    "Exporting ALL resorts of this organisation fetches every resort, object and gateway " +
-                    "from the web API.\n\n" +
-                    "That is a LOT of API calls and can take a long time — many minutes for large " +
-                    "organisations (e.g. Roompot took several minutes for ~60 resorts).\n\n" +
-                    "You can cancel while it runs. Continue?",
-                    "Export all resorts", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
-                return;
-
-            string fileName;
-            using (var dlg = new SaveFileDialog())
-            {
-                dlg.Title = "Export all resorts of this organisation";
-                dlg.Filter = "Resort bundle (*.kcbundle)|*.kcbundle|XML files (*.xml)|*.xml";
-                dlg.FileName = ResortExportService.MakeSafeFileName(org.Name) + ".kcbundle";
-                if (dlg.ShowDialog() != DialogResult.OK)
-                    return;
-                fileName = dlg.FileName;
-            }
-
-            isExporting = true;
-            buttonExportAll.Text = "Cancel";
-            buttonExportResort.Enabled = false;
-            try
-            {
-                await RunWithDisabledControlsAsync(async token =>
-                {
-                    var bundle = await ResortExportService.BuildBundleAsync(apiClient, org, progressBarManager.Progress, token);
-                    ((IProgress<double>)progressBarManager.Progress).Report(1);
-                    ResortExportService.SaveBundle(bundle, fileName);
-
-                    int totalDevices = bundle.Resorts.Sum(r => r.Devices.Count);
-                    MessageBox.Show(
-                        $"Exported {bundle.Resorts.Count} resort(s) with {totalDevices} device(s) to:\n{fileName}",
-                        "Export complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                });
-            }
-            finally
-            {
-                isExporting = false;
-                buttonExportAll.Text = "Export all";
-                buttonExportResort.Enabled = true;
-            }
-        }
 
         // Opent de KC220 config tool op het gekozen apparaat: schrijft de verbinding naar een tijdelijk
         // .kcresort en start de tool met /connect "<pad>". Geen API-calls nodig (alle gegevens staan al
