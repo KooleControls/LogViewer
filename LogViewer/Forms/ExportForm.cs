@@ -56,6 +56,12 @@ namespace LogViewer.Forms
             });
         }
 
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            cancellationTokenSource?.Cancel();
+            base.OnFormClosing(e);
+        }
+
         private async void LoadResortsForOrganisation(OrganisationConfig? organisation)
         {
             resortsManager.Clear();
@@ -219,8 +225,11 @@ namespace LogViewer.Forms
             }
             finally
             {
-                progressBarManager.Reset();
-                SetControlsEnabled(true);
+                if (!IsDisposed)
+                {
+                    progressBarManager.Reset();
+                    SetControlsEnabled(true);
+                }
                 cancellationTokenSource?.Dispose();
                 cancellationTokenSource = null;
             }

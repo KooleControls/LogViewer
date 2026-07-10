@@ -139,7 +139,7 @@ namespace LogViewer
             menuStrip1.AddMenuItem("Help", (menuItem) => Help.ShowHelp());
         }
 
-        private async void OpenExportForm()
+        private void OpenExportForm()
         {
             List<Config.Models.OrganisationConfig> orgs;
             try
