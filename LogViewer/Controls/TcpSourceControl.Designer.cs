@@ -15,6 +15,7 @@ namespace LogViewer.Controls
             if (disposing)
             {
                 Cleanup();
+                StopDiscovery();
                 components?.Dispose();
             }
             base.Dispose(disposing);
@@ -34,6 +35,8 @@ namespace LogViewer.Controls
             btnConnect = new Button();
             lblPollInterval = new Label();
             lblFetched = new Label();
+            lblDevices = new Label();
+            lstDevices = new ListBox();
             ((System.ComponentModel.ISupportInitialize)numLookBack).BeginInit();
             SuspendLayout();
             //
@@ -129,10 +132,32 @@ namespace LogViewer.Controls
             lblFetched.TabIndex = 9;
             lblFetched.Text = "Lines fetched: 0";
             //
+            // lblDevices
+            //
+            lblDevices.AutoSize = true;
+            lblDevices.Location = new Point(8, 296);
+            lblDevices.Name = "lblDevices";
+            lblDevices.Size = new Size(230, 15);
+            lblDevices.TabIndex = 10;
+            lblDevices.Text = "Discovered devices (double-click to connect)";
+            //
+            // lstDevices
+            //
+            lstDevices.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            lstDevices.DrawMode = DrawMode.OwnerDrawFixed;
+            lstDevices.IntegralHeight = false;
+            lstDevices.ItemHeight = 44;
+            lstDevices.Location = new Point(8, 316);
+            lstDevices.Name = "lstDevices";
+            lstDevices.Size = new Size(260, 320);
+            lstDevices.TabIndex = 11;
+            //
             // TcpSourceControl
             //
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(lstDevices);
+            Controls.Add(lblDevices);
             Controls.Add(lblFetched);
             Controls.Add(lblPollInterval);
             Controls.Add(btnConnect);
@@ -162,5 +187,7 @@ namespace LogViewer.Controls
         private Button btnConnect;
         private Label lblPollInterval;
         private Label lblFetched;
+        private Label lblDevices;
+        private ListBox lstDevices;
     }
 }
