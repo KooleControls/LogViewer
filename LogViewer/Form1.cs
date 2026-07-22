@@ -9,6 +9,7 @@ using LogViewer.Files.Core;
 using LogViewer.Files.Csv;
 using LogViewer.Files.Json;
 using LogViewer.Files.Yml;
+using LogViewer.Forms;
 using LogViewer.Logging;
 using LogViewer.Mapping;
 using LogViewer.Mapping.Interfaces;
@@ -133,7 +134,29 @@ namespace LogViewer
             menuStrip1.AddMenuItem("File/Save", (menuItem) => SaveFileDialog());
             menuStrip1.AddMenuItem("File/Close", (menuItem) => this.Close());
 
+            menuStrip1.AddMenuItem("Tools/Export for KC220 tool…", (menuItem) => OpenExportForm());
+
             menuStrip1.AddMenuItem("Help", (menuItem) => Help.ShowHelp());
+        }
+
+        private void OpenExportForm()
+        {
+            List<Config.Models.OrganisationConfig> orgs;
+            try
+            {
+                var config = configurationService.GetConfigAsync();
+                orgs = config.Organisations.Values.ToList();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to load configuration: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            using var form = new ExportForm(orgs);
+            form.Shown += async (s, e) => await form.LoadOrganisations();
+            form.ShowDialog(this);
         }
 
         private void NewDocument()
