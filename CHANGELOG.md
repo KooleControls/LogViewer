@@ -3,6 +3,15 @@
 Notable changes to LogViewer. Release downloads:
 https://github.com/KooleControls/LogViewer/releases
 
+## v3.11.0
+
+### Changed
+- **Organisation list updated** to the current production environments, the same list the KC220 config tool uses (Confluence DEV "Omgevingen"). It grows from 18 to 82 organisations. UBK and the internal Aedes / RCN servers are removed. (RA2-521)
+- Resort export moved from the WebAPI tab to a dialog under the **Tools** menu.
+
+### Added
+- Live device log streaming over TCP (KC2 protocol), with automatic device discovery.
+
 ## v3.10.0
 
 KC220 config tool integration — export live API data for the KC220 config tool and open the tool directly on a device.
