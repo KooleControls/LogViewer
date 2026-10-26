@@ -43,6 +43,8 @@
             buttonCancel = new Button();
             buttonSearch = new Button();
             checkBoxRequireGateways = new CheckBox();
+            buttonOpen220 = new Button();
+            buttonFavorite = new Button();
             SuspendLayout();
             // 
             // richTextBoxInfoView
@@ -142,7 +144,7 @@
             comboBoxGateways.FormattingEnabled = true;
             comboBoxGateways.Location = new Point(3, 239);
             comboBoxGateways.Name = "comboBoxGateways";
-            comboBoxGateways.Size = new Size(230, 23);
+            comboBoxGateways.Size = new Size(130, 23);
             comboBoxGateways.TabIndex = 17;
             // 
             // comboBoxResorts
@@ -194,10 +196,32 @@
             checkBoxRequireGateways.Text = "Hide objects without gateways";
             checkBoxRequireGateways.UseVisualStyleBackColor = true;
             // 
+            // buttonOpen220
+            // 
+            buttonOpen220.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            buttonOpen220.Location = new Point(168, 238);
+            buttonOpen220.Name = "buttonOpen220";
+            buttonOpen220.Size = new Size(65, 23);
+            buttonOpen220.TabIndex = 31;
+            buttonOpen220.Text = "220 tool";
+            buttonOpen220.UseVisualStyleBackColor = true;
+            // 
+            // buttonFavorite
+            //
+            buttonFavorite.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            buttonFavorite.Location = new Point(139, 238);
+            buttonFavorite.Name = "buttonFavorite";
+            buttonFavorite.Size = new Size(23, 23);
+            buttonFavorite.TabIndex = 32;
+            buttonFavorite.Text = "☆";
+            buttonFavorite.UseVisualStyleBackColor = true;
+            // 
             // ApiSourceControl
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(buttonFavorite);
+            Controls.Add(buttonOpen220);
             Controls.Add(checkBoxRequireGateways);
             Controls.Add(buttonSearch);
             Controls.Add(buttonCancel);
@@ -236,5 +260,7 @@
         private Button buttonCancel;
         private Button buttonSearch;
         private CheckBox checkBoxRequireGateways;
+        private Button buttonOpen220;
+        private Button buttonFavorite;
     }
 }

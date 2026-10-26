@@ -20,29 +20,28 @@ namespace LogViewer.Mapping.Mappers
                 case GatewayLogCodes.x02_MAIN_STARTED:
                     MapMainStarted(builder, entry);
                     return true;
+                case GatewayLogCodes.PCB1246CommunicationTimeout:
+                    MapOpenThermTimeout(builder, entry);
+                    return true;
             }
             return false;
         }
 
         public void MapMainStarted(ITraceBuilder builder, LogEntry entry)
         {
-            var descriptor = new TraceDescriptor
-            {
-                TraceId = "Events",
-                Category = "Events",
-                EntityId = "Events",
-                DrawStyle = DrawStyles.Cross,
-                DrawOption = DrawOptions.DrawNames,
-                BaseColor = Color.LightBlue,
-                Source = "GatewayMapper"
-            };
-
             string text = Encoding.ASCII.GetString(entry.RawData);
+            EventRow.Add(builder, entry, $"Gateway booted {text}", nameof(GatewayMapper));
+        }
 
-            var trace = builder.GetOrCreate(descriptor);
-            var label = new LinkedLabel(trace.Trace, entry.TimeStamp.Ticks, 1);
-            label.Text = $"Boot {text}";
-            trace.ScopeController.Labels.Add(label);
+        /// <summary>
+        /// The OpenTherm board stopped answering the minute-ly CTES ping on the internal serial
+        /// link and the gateway restarted itself, so this mark always sits just before a boot: it
+        /// says why that reboot happened. Not a thermostat event - the board going quiet takes all
+        /// of OpenTherm with it, but says nothing about the BLE thermostat.
+        /// </summary>
+        public void MapOpenThermTimeout(ITraceBuilder builder, LogEntry entry)
+        {
+            EventRow.Add(builder, entry, "OpenTherm board (PCB1246) silent - gateway rebooted", nameof(GatewayMapper));
         }
     }
 }

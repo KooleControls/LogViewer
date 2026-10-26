@@ -68,6 +68,8 @@
         HeatmanagerStateChanged = 0xA000_0013,
         HeaterActiveChanged = 0xA000_0014,
         CoolerActiveChanged = 0xA000_0015,
+        PCB1246CommunicationTimeout = 0xA000_0017,
+        ThermostatLinkChanged = 0xA000_0018,
         Therm_MemberIdCodeChanged = 0xA000_0100,
         Therm_ProductNumberChanged = 0xA000_0101,
         Therm_ProductTypeChanged = 0xA000_0102,

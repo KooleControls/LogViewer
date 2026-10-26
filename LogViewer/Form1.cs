@@ -28,9 +28,11 @@ namespace LogViewer
         private readonly ScopeController scopeController;
         private readonly ConfigurationService configurationService;
         private readonly ApiSourceControl apiSourceControl1;
+        private readonly FavoritesSourceControl favoritesSourceControl1;
         private readonly TcpSourceControl tcpSourceControl1;
         private readonly TraceManager traceManager;
         private readonly LogViewerFileService fileService;
+        private CommunicationStatusForm? communicationStatusForm;
 
         public Form1()
         {
@@ -61,8 +63,14 @@ namespace LogViewer
             // API change → full rebuild
             apiSourceControl1.OnDataChanged += (s, e) => UpdateLogView();
 
-            // MQTT → incremental update
-            mqttSourceControl1.OnLogReceived += (s, entry) => AppendLiveEntry(entry);
+            // Favorites source control: saved gateways, several at a time
+            favoritesSourceControl1 = new FavoritesSourceControl();
+            tabPageFavorites.Controls.Add(favoritesSourceControl1);
+            favoritesSourceControl1.Dock = DockStyle.Fill;
+            favoritesSourceControl1.DataSource = appContext;
+
+            // Favorites change → full rebuild
+            favoritesSourceControl1.OnDataChanged += (s, e) => UpdateLogView();
 
             // Device (TCP) source control
             tcpSourceControl1 = new TcpSourceControl();
@@ -114,7 +122,10 @@ namespace LogViewer
             {
                 var config = configurationService.GetConfigAsync();
                 UpdateMenu(config);
-                await apiSourceControl1.LoadOrganisations(config.Organisations.Values.ToList());
+
+                var organisations = config.Organisations.Values.ToList();
+                favoritesSourceControl1.LoadOrganisations(organisations);
+                await apiSourceControl1.LoadOrganisations(organisations);
             }
             catch (Exception ex)
             {
@@ -134,9 +145,43 @@ namespace LogViewer
             menuStrip1.AddMenuItem("File/Save", (menuItem) => SaveFileDialog());
             menuStrip1.AddMenuItem("File/Close", (menuItem) => this.Close());
 
+            // Categories come from the mappers: "Temperature" is the measured value on thermostats,
+            // HVAC units and legacy indoor units - the three places an actual temperature is logged.
+            menuStrip1.AddCheckboxMenuItem("View/Only temperatures", (menuItem) =>
+            {
+                traceManager.SetCategoryFilter(menuItem.Checked ? ["Temperature"] : []);
+                scopeController.RedrawAll();
+            });
+
             menuStrip1.AddMenuItem("Tools/Export for KC220 tool…", (menuItem) => OpenExportForm());
+            menuStrip1.AddMenuItem("Tools/Communication status…", (menuItem) => OpenCommunicationStatusForm());
+            menuStrip1.AddMenuItem("Tools/Gap analysis (saved logs)…", (menuItem) => new GapAnalysisForm().Show());
+            menuStrip1.AddMenuItem("Tools/Open config folder…", (menuItem) => OpenUserConfigFolder());
 
             menuStrip1.AddMenuItem("Help", (menuItem) => Help.ShowHelp());
+        }
+
+        /// <summary>
+        /// Opens Explorer on the per-user config folder with user_organisations.yaml - where
+        /// custom organisations are defined - selected, so it can be edited by hand.
+        /// </summary>
+        private void OpenUserConfigFolder()
+        {
+            string folder = ConfigurationService.UserConfigFolder;
+            string file = ConfigurationService.UserOrganisationsFile;
+            try
+            {
+                string args = File.Exists(file) ? $"/select,\"{file}\"" : $"\"{folder}\"";
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", args)
+                {
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to open {folder}: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void OpenExportForm()
@@ -159,6 +204,43 @@ namespace LogViewer
             form.ShowDialog(this);
         }
 
+        /// <summary>
+        /// Opened modeless, so the logs of a house shown from it can be inspected in the main
+        /// view while the list stays open.
+        /// </summary>
+        private void OpenCommunicationStatusForm()
+        {
+            if (communicationStatusForm != null && !communicationStatusForm.IsDisposed)
+            {
+                communicationStatusForm.Activate();
+                return;
+            }
+
+            List<Config.Models.OrganisationConfig> orgs;
+            try
+            {
+                var config = configurationService.GetConfigAsync();
+                orgs = config.Organisations.Values.ToList();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to load configuration: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            var form = new CommunicationStatusForm(orgs);
+            form.Shown += async (s, e) => await form.LoadOrganisations();
+            form.ShowLogsRequested += (s, context) =>
+            {
+                currentFile = null;
+                SetContext(context);
+                Activate();
+            };
+            communicationStatusForm = form;
+            form.Show();
+        }
+
         private void NewDocument()
         {
             currentFile = null;
@@ -169,6 +251,7 @@ namespace LogViewer
         {
             appContext = newContext ?? new LogViewerContext();
             apiSourceControl1.DataSource = appContext; // important when swapping
+            favoritesSourceControl1.DataSource = appContext;
             UpdateLogView();
         }
 

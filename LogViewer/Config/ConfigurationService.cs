@@ -28,6 +28,12 @@ namespace LogViewer.Config
         private static readonly string Organisations_SchemaFile = PathHelper.CombinePaths(ConfigFolder, "definitions\\organisations_schema.json");
         private static readonly string User_OrganisationsFile = PathHelper.CombinePaths(ConfigFolder, "user_organisations.yaml");
 
+        /// <summary>Folder holding the per-user config files (user_organisations.yaml, favorites.yaml).</summary>
+        public static string UserConfigFolder => Path.GetFullPath(ConfigFolder);
+
+        /// <summary>Full path of the user-editable organisations file, where custom organisations are defined.</summary>
+        public static string UserOrganisationsFile => Path.GetFullPath(User_OrganisationsFile);
+
         private readonly IConfigMerger configMerger;
 
         public ConfigurationService()

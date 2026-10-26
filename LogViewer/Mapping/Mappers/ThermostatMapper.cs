@@ -13,10 +13,10 @@ namespace LogViewer.Mapping.Mappers
     {
         public bool Map(LogEntry entry, ITraceBuilder builder)
         {
-            if (entry.DeviceType != DeviceType.Thermostat)
+            if (entry.Device.Type != DeviceType.Thermostat)
                 return false;
 
-            var id = entry.DeviceId;
+            var id = entry.Device.Id;
             var code = entry.AsGatewayLogCode();
 
             switch (code)
@@ -35,6 +35,12 @@ namespace LogViewer.Mapping.Mappers
                     return true;
                 case GatewayLogCodes.Therm_CoolingRequestChanged:
                     MapCoolingRequest(builder, entry, id);
+                    return true;
+                case GatewayLogCodes.ThermostatLinkChanged:
+                    MapBleLink(builder, entry);
+                    return true;
+                case GatewayLogCodes.Therm_CommunicationTimeout:
+                    MapOthComm(builder, entry);
                     return true;
             }
             return false;
@@ -137,6 +143,33 @@ namespace LogViewer.Mapping.Mappers
             trace.Trace.Points.Add(new PointD(
                 entry.TimeStamp.Ticks,
                 entry.Measurement ?? 0));
+        }
+
+        /// <summary>
+        /// The gateway's own BLE link to the thermostat. Spelled out as "BLE" because there are two
+        /// other ways to lose the same thermostat - see <see cref="MapOthComm"/> and the PCB1246
+        /// mark in GatewayMapper - and the label is the only thing telling them apart.
+        /// </summary>
+        private void MapBleLink(ITraceBuilder builder, LogEntry entry)
+        {
+            var text = (entry.Measurement ?? 0) != 0
+                ? "Thermostat BLE connected"
+                : "Thermostat BLE lost";
+
+            EventRow.Add(builder, entry, text, nameof(ThermostatMapper));
+        }
+
+        /// <summary>
+        /// The OpenTherm room unit's CTO flag, reported up by the PCB1246: the thermostat stopped
+        /// answering on the OpenTherm bus. Nothing to do with BLE.
+        /// </summary>
+        private void MapOthComm(ITraceBuilder builder, LogEntry entry)
+        {
+            var text = (entry.Measurement ?? 0) != 0
+                ? "Thermostat OpenTherm timeout"
+                : "Thermostat OpenTherm restored";
+
+            EventRow.Add(builder, entry, text, nameof(ThermostatMapper));
         }
     }
 }

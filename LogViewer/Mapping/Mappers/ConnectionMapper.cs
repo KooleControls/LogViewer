@@ -12,7 +12,7 @@ namespace LogViewer.Mapping.Mappers
         public bool Map(LogEntry entry, ITraceBuilder builder)
         {
             var code = entry.AsGatewayLogCode();
-            var id = entry.DeviceId;
+            var id = entry.Device.Id;
 
             switch (code)
             {

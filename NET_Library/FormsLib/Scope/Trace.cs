@@ -218,6 +218,11 @@ namespace FormsLib.Scope
                     Point pAct = convert(pActD);
                     Point pNext = convert(pNextD);
 
+                    // A state bar is drawn at stateY whatever its value - the value is only its text -
+                    // so the value must not decide whether the bar is within the viewport.
+                    if (DrawStyle == DrawStyles.State)
+                        pPrev.Y = pAct.Y = pNext.Y = (int)stateY;
+
                     bool across = pAct.X <= viewPort.X && pNext.X >= (viewPort.X + viewPort.Width);
 
                     // Check if the points are within the viewport or across it

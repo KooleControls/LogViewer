@@ -9,16 +9,20 @@ namespace LogViewer.Providers.API
     public class ApiGatewayLogProvider
     {
         private readonly InternalApiClient client;
-        private readonly int gatewayId;
+        private readonly int gatewayOid;
+        private readonly int? gatewayDeviceId;
         private readonly DateTime from;
         private readonly DateTime until;
 
         public event EventHandler<TimeSpan>? OnResponseTimeReported;
 
-        public ApiGatewayLogProvider(InternalApiClient client, int gatewayId, DateTime from, DateTime until)
+        /// <param name="gatewayOid">Database key of the gateway record, used to scope the query.</param>
+        /// <param name="gatewayDeviceId">The gateway's own device id (DGID), stamped onto the entries.</param>
+        public ApiGatewayLogProvider(InternalApiClient client, int gatewayOid, int? gatewayDeviceId, DateTime from, DateTime until)
         {
             this.client = client;
-            this.gatewayId = gatewayId;
+            this.gatewayOid = gatewayOid;
+            this.gatewayDeviceId = gatewayDeviceId;
             this.from = from;
             this.until = until;
         }
@@ -48,7 +52,30 @@ namespace LogViewer.Providers.API
             log.Entries.AddRange(await GetAllAsync(GatewayLogApi_GetPageAsync, token, progressConverter));
             log.Entries.AddRange(await GetAllAsync(DeviceApiData_GetPageAsync, token, progressConverter));
 
+            StampGatewayAsParent(log);
+
             return log;
+        }
+
+        /// <summary>
+        /// A log row only identifies the component inside the gateway (the thermostat, HVAC unit 2,
+        /// the gateway itself) - never which gateway that is. This fetch was scoped to one gateway,
+        /// so this is where that knowledge lives, and it gets stamped on as the parent.
+        /// One shared instance: every entry here came from the same gateway.
+        /// </summary>
+        private void StampGatewayAsParent(LogCollection log)
+        {
+            if (gatewayDeviceId is not int deviceId)
+                return;
+
+            var gateway = new DeviceInfo
+            {
+                Type = LogViewer.Logging.DeviceType.Gateway,
+                Id = deviceId,
+            };
+
+            foreach (var entry in log.Entries)
+                entry.Device.Parent = gateway;
         }
 
 
@@ -103,7 +130,7 @@ namespace LogViewer.Providers.API
         {
             List<string> filters =
             [
-                $"Gateway.Id::{gatewayId}",
+                $"Gateway.Id::{gatewayOid}",
                 $"TimeStamp>:{from:s}",  // ISO 8601 format
                 $"TimeStamp<:{until:s}"  // ISO 8601 format
             ];
@@ -121,7 +148,7 @@ namespace LogViewer.Providers.API
         {
             List<string> filters =
             [
-                $"DeviceOid::{gatewayId}",
+                $"DeviceOid::{gatewayOid}",
                 "Type::1",               // Gateway device
                 $"TimeStamp>:{from:s}",  // ISO 8601 format
                 $"TimeStamp<:{until:s}"  // ISO 8601 format

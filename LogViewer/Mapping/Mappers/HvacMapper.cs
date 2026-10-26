@@ -11,10 +11,10 @@ namespace LogViewer.Mapping.Mappers
     {
         public bool Map(LogEntry entry, ITraceBuilder builder)
         {
-            if (entry.DeviceType != DeviceType.HvacUnit)
+            if (entry.Device.Type != DeviceType.HvacUnit)
                 return false;
 
-            var id = entry.DeviceId;
+            var id = entry.Device.Id;
             var code = entry.AsGatewayLogCode();
 
             switch (code)

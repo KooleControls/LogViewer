@@ -38,14 +38,13 @@ namespace LogViewer
             menuStrip1 = new MenuStrip();
             markerView1 = new FormsLib.Scope.Controls.CursorsView();
             tabControl1 = new TabControl();
+            tabPageFavorites = new TabPage();
             tabPageApi = new TabPage();
             tabPageTraces = new TabPage();
             traceView1 = new FormsLib.Scope.Controls.TraceView();
-            tabPage1 = new TabPage();
             tabPageDevice = new TabPage();
             statusStrip1 = new StatusStrip();
             toolStripStatusLabel1 = new ToolStripStatusLabel();
-            mqttSourceControl1 = new LogViewer.Controls.MqttSourceControl();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
@@ -56,7 +55,6 @@ namespace LogViewer
             splitContainer2.SuspendLayout();
             tabControl1.SuspendLayout();
             tabPageTraces.SuspendLayout();
-            tabPage1.SuspendLayout();
             statusStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -130,9 +128,9 @@ namespace LogViewer
             // 
             // tabControl1
             // 
+            tabControl1.Controls.Add(tabPageFavorites);
             tabControl1.Controls.Add(tabPageApi);
             tabControl1.Controls.Add(tabPageTraces);
-            tabControl1.Controls.Add(tabPage1);
             tabControl1.Controls.Add(tabPageDevice);
             tabControl1.Dock = DockStyle.Fill;
             tabControl1.Location = new Point(0, 0);
@@ -140,9 +138,19 @@ namespace LogViewer
             tabControl1.SelectedIndex = 0;
             tabControl1.Size = new Size(296, 1019);
             tabControl1.TabIndex = 0;
-            // 
+            //
+            // tabPageFavorites
+            //
+            tabPageFavorites.Location = new Point(4, 24);
+            tabPageFavorites.Name = "tabPageFavorites";
+            tabPageFavorites.Padding = new Padding(3);
+            tabPageFavorites.Size = new Size(288, 991);
+            tabPageFavorites.TabIndex = 4;
+            tabPageFavorites.Text = "Favorites";
+            tabPageFavorites.UseVisualStyleBackColor = true;
+            //
             // tabPageApi
-            // 
+            //
             tabPageApi.Location = new Point(4, 24);
             tabPageApi.Name = "tabPageApi";
             tabPageApi.Padding = new Padding(3);
@@ -171,17 +179,6 @@ namespace LogViewer
             traceView1.Name = "traceView1";
             traceView1.Size = new Size(282, 985);
             traceView1.TabIndex = 0;
-            // 
-            // tabPage1
-            // 
-            tabPage1.Controls.Add(mqttSourceControl1);
-            tabPage1.Location = new Point(4, 24);
-            tabPage1.Name = "tabPage1";
-            tabPage1.Padding = new Padding(3);
-            tabPage1.Size = new Size(288, 991);
-            tabPage1.TabIndex = 2;
-            tabPage1.Text = "Mqtt";
-            tabPage1.UseVisualStyleBackColor = true;
             //
             // tabPageDevice
             //
@@ -207,17 +204,9 @@ namespace LogViewer
             toolStripStatusLabel1.Name = "toolStripStatusLabel1";
             toolStripStatusLabel1.Size = new Size(118, 17);
             toolStripStatusLabel1.Text = "toolStripStatusLabel1";
-            // 
-            // mqttSourceControl1
-            // 
-            mqttSourceControl1.Dock = DockStyle.Fill;
-            mqttSourceControl1.Location = new Point(3, 3);
-            mqttSourceControl1.Name = "mqttSourceControl1";
-            mqttSourceControl1.Size = new Size(282, 985);
-            mqttSourceControl1.TabIndex = 0;
-            // 
+            //
             // Form1
-            // 
+            //
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1904, 1041);
@@ -236,7 +225,6 @@ namespace LogViewer
             splitContainer2.ResumeLayout(false);
             tabControl1.ResumeLayout(false);
             tabPageTraces.ResumeLayout(false);
-            tabPage1.ResumeLayout(false);
             statusStrip1.ResumeLayout(false);
             statusStrip1.PerformLayout();
             ResumeLayout(false);
@@ -253,11 +241,10 @@ namespace LogViewer
         private TabControl tabControl1;
         private TabPage tabPageTraces;
         private FormsLib.Scope.Controls.TraceView traceView1;
+        private TabPage tabPageFavorites;
         private TabPage tabPageApi;
         private StatusStrip statusStrip1;
         private ToolStripStatusLabel toolStripStatusLabel1;
-        private TabPage tabPage1;
         private TabPage tabPageDevice;
-        private Controls.MqttSourceControl mqttSourceControl1;
     }
 }

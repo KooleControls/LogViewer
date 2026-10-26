@@ -12,10 +12,10 @@ namespace LogViewer.Mapping.Mappers
     {
         public bool Map(LogEntry entry, ITraceBuilder builder)
         {
-            if (entry.DeviceType != DeviceType.SmartHome)
+            if (entry.Device.Type != DeviceType.SmartHome)
                 return false;
 
-            var id = entry.DeviceId;
+            var id = entry.Device.Id;
             var code = entry.AsGatewayLogCode();
 
             switch (code)

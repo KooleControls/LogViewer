@@ -57,7 +57,6 @@ namespace LogViewer.Devices.Gateway
                 LogCode = (UInt32)logCode,
                 RawData = logItem.Data,
                 SourceSoftwareId = SoftwareId.Gateway_1245,
-                DeviceId = 0,
             };
 
             ExpandLogEntry(logEntry, logCode, logItem.Data);
@@ -84,7 +83,6 @@ namespace LogViewer.Devices.Gateway
                 LogCode = (UInt32)logCode,
                 RawData = data.Data,
                 SourceSoftwareId = SoftwareId.Gateway_1245,
-                DeviceId = 0,
             };
             ExpandLogEntry(logEntry, logCode, data.Data);
             return logEntry;
@@ -100,22 +98,33 @@ namespace LogViewer.Devices.Gateway
                 case GatewayLogCodes.TempSetpointOverride:
                 case GatewayLogCodes.Therm_TempActualChanged:
                 case GatewayLogCodes.Therm_TempSetpointChanged:
-                    logEntry.DeviceType = DeviceType.Thermostat;
-                    logEntry.DeviceId = 0;
+                    logEntry.Device.Type =DeviceType.Thermostat;
+                    logEntry.Device.Id =0;
                     logEntry.Measurement = BitConverter.ToSingle(data, 3);
                     break;
 
                 case GatewayLogCodes.Therm_CoolingRequestChanged:
                 case GatewayLogCodes.Therm_HeatingRequestChanged:
-                    logEntry.DeviceType = DeviceType.Thermostat;
-                    logEntry.DeviceId = 0;
+                    logEntry.Device.Type =DeviceType.Thermostat;
+                    logEntry.Device.Id =0;
                     logEntry.Measurement = BitConverter.ToBoolean(data, 3) ? 1 : 0;
+                    break;
+
+                // Both are one byte, and both are about "can we still reach the thermostat" -
+                // but over different wires. ThermostatLinkChanged is the gateway's own BLE link
+                // (1 up, 0 lost); Therm_CommunicationTimeout is the CTO flag the PCB1246 reports
+                // for the OpenTherm room unit (1 timed out, 0 talking again).
+                case GatewayLogCodes.Therm_CommunicationTimeout:
+                case GatewayLogCodes.ThermostatLinkChanged:
+                    logEntry.Device.Type = DeviceType.Thermostat;
+                    logEntry.Device.Id = 0;
+                    logEntry.Measurement = data[3];
                     break;
 
                 case GatewayLogCodes.SmartHomeStateChanged:
                 case GatewayLogCodes.HeatmanagerStateChanged:
-                    logEntry.DeviceType = DeviceType.SmartHome;
-                    logEntry.DeviceId = 0;
+                    logEntry.Device.Type =DeviceType.SmartHome;
+                    logEntry.Device.Id =0;
                     logEntry.Measurement = data[4];
                     break;
 
@@ -123,35 +132,35 @@ namespace LogViewer.Devices.Gateway
                 case GatewayLogCodes.Input2Changed:
                 case GatewayLogCodes.Relais1Changed:
                 case GatewayLogCodes.Relais2Changed:
-                    logEntry.DeviceType = DeviceType.Gateway;
-                    logEntry.DeviceId = 0;
+                    logEntry.Device.Type =DeviceType.Gateway;
+                    logEntry.Device.Id =0;
                     logEntry.Measurement = BitConverter.ToBoolean(data, 3) ? 1 : 0;
                     break;
 
                 case GatewayLogCodes.CMN_ModbusError:
-                    logEntry.DeviceType = DeviceType.SmartHome;
-                    logEntry.DeviceId = 0;
+                    logEntry.Device.Type =DeviceType.SmartHome;
+                    logEntry.Device.Id =0;
                     logEntry.Measurement = data[3];
                     break;
 
                 case GatewayLogCodes.CMN_IndoorUnit_ActualTempChanged:
                 case GatewayLogCodes.CMN_IndoorUnit_SetpointChanged:
-                    logEntry.DeviceType = DeviceType.LegacyIndoorUnit;
-                    logEntry.DeviceId = data[3];
+                    logEntry.Device.Type =DeviceType.LegacyIndoorUnit;
+                    logEntry.Device.Id =data[3];
                     logEntry.Measurement = (float)BitConverter.ToUInt16(data, 4) / 10f;
                     break;
 
                 case GatewayLogCodes.CMN_IndoorUnit_ModeChanged:
                 case GatewayLogCodes.CMN_IndoorUnit_FaultCodeChanged:
                 case GatewayLogCodes.CMN_IndoorUnit_OnOffChanged:
-                    logEntry.DeviceType = DeviceType.LegacyIndoorUnit;
-                    logEntry.DeviceId = data[3];
+                    logEntry.Device.Type =DeviceType.LegacyIndoorUnit;
+                    logEntry.Device.Id =data[3];
                     logEntry.Measurement = BitConverter.ToUInt16(data, 4);
                     break;
 
                 case GatewayLogCodes.Hvac_IsFaultChanged:
-                    logEntry.DeviceType = DeviceType.HvacUnit;
-                    logEntry.DeviceId = data[3];
+                    logEntry.Device.Type =DeviceType.HvacUnit;
+                    logEntry.Device.Id =data[3];
                     logEntry.Measurement = BitConverter.ToBoolean(data, 4) ? 1 : 0;
                     break;
 
@@ -160,15 +169,15 @@ namespace LogViewer.Devices.Gateway
                 case GatewayLogCodes.Hvac_RemoteCTRLChanged:
                 case GatewayLogCodes.Hvac_HeatingActiveChanged:
                 case GatewayLogCodes.Hvac_CoolingActiveChanged:
-                    logEntry.DeviceType = DeviceType.HvacUnit;
-                    logEntry.DeviceId = data[3];
+                    logEntry.Device.Type =DeviceType.HvacUnit;
+                    logEntry.Device.Id =data[3];
                     logEntry.Measurement = BitConverter.ToUInt16(data, 4);
                     break;
 
                 case GatewayLogCodes.Hvac_SetpointChanged:
                 case GatewayLogCodes.Hvac_ActualTempChanged:
-                    logEntry.DeviceType = DeviceType.HvacUnit;
-                    logEntry.DeviceId = data[3];
+                    logEntry.Device.Type =DeviceType.HvacUnit;
+                    logEntry.Device.Id =data[3];
                     logEntry.Measurement = ((float)BitConverter.ToUInt16(data, 4) / 10f);
                     break;
 

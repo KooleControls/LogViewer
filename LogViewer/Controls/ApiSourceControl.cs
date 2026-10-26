@@ -3,6 +3,7 @@ using KC.InternalApiClient;
 using LogViewer.AppContext;
 using LogViewer.Config.Models;
 using LogViewer.Controls.Helpers;
+using LogViewer.Favorites;
 using LogViewer.Files;
 using LogViewer.Providers.API;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -26,7 +27,6 @@ namespace LogViewer.Controls
         private InternalApiClient? apiClient;
         private readonly ControlStateManager controlStateManager;
         private readonly ApiClientProvider apiClientProvider;
-        private readonly Button buttonOpen220;
 
 
         CancellationTokenSource? cancellationTokenSource;
@@ -34,20 +34,6 @@ namespace LogViewer.Controls
         public ApiSourceControl()
         {
             InitializeComponent();
-
-            // "220 tool" naast de gateway-keuzelijst: opent de KC220 config tool op het gekozen apparaat
-            // (schrijft de verbinding naar een tijdelijk .kcresort en start de tool met /connect).
-            // Grootte/positie wordt in OnLoad uitgelijnd op buttonFetch (na DPI-schaling), zodat de knop
-            // een nette kolom vormt met Fetch/Cancel/Search op elke schaalfactor.
-            buttonOpen220 = new Button
-            {
-                Text = "220 tool",
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
-                UseVisualStyleBackColor = true,
-            };
-            buttonOpen220.Click += (s, e) => OpenInKc220Tool();
-            Controls.Add(buttonOpen220);
-            buttonOpen220.BringToFront();
 
             controlStateManager = new ControlStateManager([
                 richTextBoxInfoView,
@@ -64,6 +50,7 @@ namespace LogViewer.Controls
                 comboBoxOrganisations,
                 buttonSearch,
                 buttonOpen220,
+                buttonFavorite
             ]);
 
 
@@ -91,7 +78,11 @@ namespace LogViewer.Controls
             gatewaysManager = new(comboBoxGateways);
             gatewaysManager.DisplayMember = nameof(Gateway.Name);
             gatewaysManager.Progress = progressBarManager.Progress;
-            gatewaysManager.SelectedItemChanged += (s, gateway) => UpdateInfoForGateway(gateway);
+            gatewaysManager.SelectedItemChanged += (s, gateway) =>
+            {
+                UpdateInfoForGateway(gateway);
+                UpdateFavoriteButton();
+            };
 
             infoViewManager = new InfoViewManager(richTextBoxInfoView);
 
@@ -101,6 +92,12 @@ namespace LogViewer.Controls
             buttonCancel.Click += (s, e) => cancellationTokenSource?.Cancel();
             buttonSearch.Click += (s, e) => LoadObjectItemsForResort(resortsManager.SelectedItem, textBoxSearch.Text);
             buttonFetch.Click += (s, e) => FetchLogsForGateway(gatewaysManager.SelectedItem);
+            buttonOpen220.Click += (s, e) => OpenInKc220Tool();
+            buttonFavorite.Click += (s, e) => ToggleFavorite();
+
+            // Keep the star honest when a favorite is removed from the favorites list instead.
+            FavoritesStore.Shared.Changed += (s, e) => UpdateFavoriteButton();
+            UpdateFavoriteButton();
 
             checkBoxRequireGateways.CheckedChanged += (s, e) => LoadObjectItemsForResort(resortsManager.SelectedItem, textBoxSearch.Text);
 
@@ -111,16 +108,50 @@ namespace LogViewer.Controls
             apiClientProvider = new ApiClientProvider(clientCredentialsDialog);
         }
 
-        protected override void OnLoad(EventArgs e)
+        /// <summary>
+        /// Builds a favorite from what is currently selected. Null when there is no gateway to save:
+        /// the gateway is the only part that matters, the rest is context for the list.
+        /// </summary>
+        private Favorite? CurrentFavorite()
         {
-            base.OnLoad(e);
+            var gateway = gatewaysManager.SelectedItem;
+            if (gateway?.Id == null)
+                return null;
 
-            // Lijn "220 tool" uit op de Fetch-knop nadat DPI-schaling is toegepast: zelfde grootte en
-            // linker-/rechterrand, zodat 220 tool, Fetch en Cancel een nette verticale kolom vormen.
-            // De gateway-combo krimpt tot links van de knop met een gat van 6px.
-            buttonOpen220.Size = buttonFetch.Size;
-            buttonOpen220.Location = new Point(buttonFetch.Left, comboBoxGateways.Top);
-            comboBoxGateways.Width = buttonOpen220.Left - 6 - comboBoxGateways.Left;
+            var organisation = organisationsManager.SelectedItem;
+
+            return new Favorite
+            {
+                Source = FavoriteSource.Api,
+                Label = string.IsNullOrWhiteSpace(gateway.Name) ? null : gateway.Name,
+                Organisation = organisation?.Name,
+                OrganisationBasePath = organisation?.BasePath,
+                GatewayOid = gateway.Id.Value,
+                GatewayDeviceId = (int?)gateway.GatewayId,
+                Resort = resortsManager.SelectedItem?.Name,
+                ObjectName = (listBoxObjectItems.SelectedItem as ObjectItem)?.Name,
+            };
+        }
+
+        /// <summary>The button only ever reflects the store, so it can't claim something it didn't save.</summary>
+        private void UpdateFavoriteButton()
+        {
+            var favorite = CurrentFavorite();
+            bool isFavorite = favorite != null && FavoritesStore.Shared.Contains(favorite);
+
+            buttonFavorite.Enabled = favorite != null;
+            buttonFavorite.Text = isFavorite ? "★" : "☆";
+        }
+
+        private void ToggleFavorite()
+        {
+            var favorite = CurrentFavorite();
+            if (favorite == null)
+                return;
+
+            FavoritesStore.Shared.Toggle(favorite);
+
+            // The store raises Changed, which puts the star in the right state.
         }
 
 
@@ -304,7 +335,8 @@ namespace LogViewer.Controls
 
             await RunWithDisabledControlsAsync(async token =>
             {
-                var logProvider = new ApiGatewayLogProvider(apiClient, gateway.Id.Value, dateTimePickerFrom.Value, dateTimePickerUntill.Value);
+                // Id is the database key used to query; GatewayId is the gateway's own device id (DGID).
+                var logProvider = new ApiGatewayLogProvider(apiClient, gateway.Id.Value, (int?)gateway.GatewayId, dateTimePickerFrom.Value, dateTimePickerUntill.Value);
 
 
                 infoViewManager.ClearApiStatsInfo();

@@ -4,7 +4,7 @@ using LogViewer.Logging;
 namespace LogViewer.Devices.Gateway
 {
     /// <summary>
-    /// Parses a raw 64-byte gateway <c>log_data_t</c> frame (as delivered over MQTT or the KC2 TCP
+    /// Parses a raw 64-byte gateway <c>log_data_t</c> frame (as delivered over the KC2 TCP
     /// protocol) into a <see cref="LogEntry"/>.
     ///
     /// Layout (64 bytes): code(1) owner(8) timestamp(5) actionCode(1) data(46) version(3).
