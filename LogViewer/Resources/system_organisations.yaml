@@ -1,5 +1,7 @@
 organisations:
 
+# Same list as the KC220 config tool (system_organisations.yaml there), which follows the
+# Confluence DEV "Omgevingen" page. smartManagerUrl is left out: the LogViewer schema rejects it.
   DNR:
     name: Duinrell
     organisationId: 1
@@ -84,13 +86,6 @@ organisations:
     authenticationMethod: GetOAuth2_OpenIdConnectClient
     authPath: https://accounts.kcsmart.net/realms/tpt
 
-  UBK:
-    name: Greenboutique
-    organisationId: 1
-    basePath: https://ubk.kcsmartho.me/api
-    authenticationMethod: GetOAuth2_OpenIdConnectClient
-    authPath: https://accounts.kcsmart.net/realms/ubk
-
   VGB:
     name: Strandpark Vlugtenburg
     organisationId: 1
@@ -112,17 +107,472 @@ organisations:
     authenticationMethod: GetOAuth2_OpenIdConnectClient
     authPath: https://accounts.kcsmart.net/realms/wws
 
-  aedes:
-    name: Aedes (interne server)
+
+  ACP:
+    name: ADAM Camping Platz
     organisationId: 1
-    basePath: https://api.koolecontrols.nl/aedesmaritima/live/api
-    authenticationMethod: GetOAuth2_ApplicationFlowClient
-    authPath: https://accounts.kcsmart.net/realms/kc
-    
-  rcn:
-    name: RCN (interne server)
+    basePath: https://acp.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/acp
+
+  BEB:
+    name: Buitenplaats Elspeter Bosch (ST&D)
     organisationId: 1
-    basePath: https://api.koolecontrols.nl/rcn/live/api
-    authenticationMethod: GetOAuth2_ApplicationFlowClient
-    authPath: https://accounts.kcsmart.net/realms/kc
-    
+    basePath: https://beb.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/beb
+
+  BGB:
+    name: Buitengoed de Boomgaard (ST&D)
+    organisationId: 1
+    basePath: https://bgb.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/bgb
+
+  BVR:
+    name: Bungalowpark de Verrassing
+    organisationId: 1
+    basePath: https://bvr.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/bvr
+
+  CBZ:
+    name: Camping Bergzicht (ST&D)
+    organisationId: 1
+    basePath: https://cbz.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/cbz
+
+  CCP:
+    name: Camping Papillon
+    organisationId: 1
+    basePath: https://ccp.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/ccp
+
+  CDB:
+    name: Camping Du Barrage Rosport (ST&D)
+    organisationId: 1
+    basePath: https://cdb.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/cdb
+
+  CDG:
+    name: Camping de Geuldert (ST&D)
+    organisationId: 1
+    basePath: https://cdg.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/cdg
+
+  CDH:
+    name: Camping de Duinhoeve
+    organisationId: 1
+    basePath: https://cdh.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/cdh
+
+  CDI:
+    name: Camping De Ikeleane (ST&D)
+    organisationId: 1
+    basePath: https://cdi.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/cdi
+
+  CDM:
+    name: Camping de Drie Morgen (ST&D)
+    organisationId: 1
+    basePath: https://cdm.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/cdm
+
+  CDV:
+    name: Camping de Voorst (ST&D)
+    organisationId: 1
+    basePath: https://cdv.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/cdv
+
+  CDW:
+    name: Camping de Waay (ST&D)
+    organisationId: 1
+    basePath: https://cdw.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/cdw
+
+  CDZ:
+    name: Camping Duinezwin
+    organisationId: 1
+    basePath: https://cdz.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/cdz
+
+  CEP:
+    name: Camping Erve Protzman (ST&D)
+    organisationId: 1
+    basePath: https://cep.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/cep
+
+  CGD:
+    name: Camping 't Geuldal (ST&D)
+    organisationId: 1
+    basePath: https://cgd.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/cgd
+
+  CGV:
+    name: Camping de Garve (ST&D)
+    organisationId: 1
+    basePath: https://cgv.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/cgv
+
+  CGZ:
+    name: Camping Goorzicht
+    organisationId: 1
+    basePath: https://cgz.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/cgz
+
+  CHB:
+    name: Camping de Holterberg
+    organisationId: 1
+    basePath: https://chb.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/chb
+
+  CNL:
+    name: Camping Natuurlijk Limburg
+    organisationId: 1
+    basePath: https://cnl.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/cnl
+
+  CPL:
+    name: Camping Padjelanta (ST&D)
+    organisationId: 1
+    basePath: https://cpl.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/cpl
+
+  CRD:
+    name: Camping Reeëndal (ST&D)
+    organisationId: 1
+    basePath: https://crd.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/crd
+
+  CSP:
+    name: Camping Schippers
+    organisationId: 1
+    basePath: https://csp.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/csp
+
+  CSW:
+    name: Camping Simmerwille (ST&D)
+    organisationId: 1
+    basePath: https://csw.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/csw
+
+  CVB:
+    name: Camping de Vossenburcht (ST&D)
+    organisationId: 1
+    basePath: https://cvb.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/cvb
+
+  CWH:
+    name: Camping de Wildhoeve (ST&D)
+    organisationId: 1
+    basePath: https://cwh.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/cwh
+
+  CZH:
+    name: Ardoer Camping de Zandhegge (ST&D)
+    organisationId: 1
+    basePath: https://czh.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/czh
+
+  DKW:
+    name: De Kleine Wolf (ST&D)
+    organisationId: 1
+    basePath: https://dkw.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/dkw
+
+  DRM:
+    name: Dormio Group
+    organisationId: 1
+    basePath: https://drm.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/drm
+
+  DVH:
+    name: De Verborgen Hoek (ST&D)
+    organisationId: 1
+    basePath: https://dvh.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/dvh
+
+  FJO:
+    name: Fjora Resort
+    organisationId: 1
+    basePath: https://fjo.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/fjo
+
+  FVH:
+    name: FEWO Verhuur
+    organisationId: 1
+    basePath: https://fvh.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/fvh
+
+  GCX:
+    name: Gemeindeverwaltung Clervaux (ST&D)
+    organisationId: 1
+    basePath: https://gcx.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/gcx
+
+  GRD:
+    name: Groenendijk Verhuur
+    organisationId: 1
+    basePath: https://grd.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/grd
+
+  HDB:
+    name: De Heldense Bossen (ST&D)
+    organisationId: 1
+    basePath: https://hdb.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/hdb
+
+  HSW:
+    name: Hampshire Spaarnwoude
+    organisationId: 1
+    basePath: https://hsw.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/hsw
+
+  KBT:
+    name: De Kleine Belties (ST&D)
+    organisationId: 1
+    basePath: https://kbt.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/kbt
+
+  KHB:
+    name: Vakantiepark Krieghuusbelten (ST&D)
+    organisationId: 1
+    basePath: https://khb.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/khb
+
+  LBV:
+    name: Lettenburg Valley
+    organisationId: 1
+    basePath: https://lbv.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/lbv
+
+  LDL:
+    name: Landal
+    organisationId: 1
+    basePath: https://ldl.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/ldl
+
+  LME:
+    name: De Lemeler Esch (ST&D)
+    organisationId: 1
+    basePath: https://lme.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/lme
+
+  LPD:
+    name: Camping Consdorf La Pinede (ST&D)
+    organisationId: 1
+    basePath: https://lpd.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/lpd
+
+  NLD:
+    name: Camping 't Noorder Sandt (ST&D)
+    organisationId: 1
+    basePath: https://nld.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/nld
+
+  NML:
+    name: Nommerlayen (ST&D)
+    organisationId: 1
+    basePath: https://nml.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/nml
+
+  NOL:
+    name: Camping de Nollen (ST&D)
+    organisationId: 1
+    basePath: https://nol.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/nol
+
+  ONI:
+    name: Onilio
+    organisationId: 1
+    basePath: https://oni.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/oni
+
+  PDK:
+    name: De Paardekreek
+    organisationId: 1
+    basePath: https://pdk.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/pdk
+
+  RPZ:
+    name: Recreatiepark 't Zand
+    organisationId: 1
+    basePath: https://rpz.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/rpz
+
+  RVH:
+    name: Recreatiepark de Veldhoek (ST&D)
+    organisationId: 1
+    basePath: https://rvh.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/rvh
+
+  SAN:
+    name: Sandaya
+    organisationId: 1
+    basePath: https://san.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/san
+
+  SCZ:
+    name: Stadscamping Zeeland (ST&D)
+    organisationId: 1
+    basePath: https://scz.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/scz
+
+  SHR:
+    name: Soof Heuvelrug
+    organisationId: 1
+    basePath: https://shr.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/shr
+
+  SIB:
+    name: Siblu
+    organisationId: 1
+    basePath: https://sib.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/sib
+
+  SIT:
+    name: SIT Mertert (ST&D)
+    organisationId: 1
+    basePath: https://sit.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/sit
+
+  SPN:
+    name: Strandpark Nulde
+    organisationId: 1
+    basePath: https://spn.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/spn
+
+  SST:
+    name: Strandplevier Suites Texel
+    organisationId: 1
+    basePath: https://sst.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/sst
+
+  SUC:
+    name: Succesparken
+    organisationId: 1
+    basePath: https://suc.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/suc
+
+  SWK:
+    name: Stichting Wereld Erfgoed Kinderdijk (ST&D)
+    organisationId: 1
+    basePath: https://swk.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/swk
+
+  TBG:
+    name: De Twee Bruggen (ST&D)
+    organisationId: 1
+    basePath: https://tbg.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/tbg
+
+  VDV:
+    name: La ville de Vianden (ST&D)
+    organisationId: 1
+    basePath: https://vdv.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/vdv
+
+  VPM:
+    name: Vakantiepark Molke (ST&D)
+    organisationId: 1
+    basePath: https://vpm.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/vpm
+
+  VPS:
+    name: Vakantiepark Strandheem
+    organisationId: 1
+    basePath: https://vps.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/vps
+
+  VRO:
+    name: Camping de Vrolijk (ST&D)
+    organisationId: 1
+    basePath: https://vro.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/vro
+
+  VRW:
+    name: Vakantiepark 't Rheezerwold (ST&D)
+    organisationId: 1
+    basePath: https://vrw.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/vrw
+
+  VSR:
+    name: Vakantiepark Soof aan de Rijn (ST&D)
+    organisationId: 1
+    basePath: https://vsr.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/vsr
+
+  VTB:
+    name: Vakantiepark de Thijmse Berg
+    organisationId: 1
+    basePath: https://vtb.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/vtb
+
+  WAR:
+    name: Jachthaven Wartena
+    organisationId: 1
+    basePath: https://war.kcsmartho.me/api
+    authenticationMethod: GetOAuth2_OpenIdConnectClient
+    authPath: https://accounts.kcsmart.net/realms/war
