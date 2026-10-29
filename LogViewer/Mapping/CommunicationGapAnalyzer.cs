@@ -13,6 +13,7 @@ namespace LogViewer.Mapping
         OpenThermTimeout = 1 << 3,
         ModbusError = 1 << 4,
         IndoorUnitFault = 1 << 5,
+        IndoorUnitLost = 1 << 6,    // the gateway reports a Modbus indoor unit that does not answer
     }
 
     /// <summary>From <see cref="Time"/> on, until the next change, the house had these problems.</summary>
@@ -45,6 +46,19 @@ namespace LogViewer.Mapping
             periods.AddRange(ReportedPeriods(sorted, until, CommunicationProblems.IndoorUnitFault,
                 GatewayLogCodes.Hvac_IsFaultChanged));
 
+            // Per unit: one unit answering again must not end another unit's outage. A boot ends
+            // them all: after a boot the gateway logs each unit's state again once it polled it,
+            // so a unit still down starts a new outage then, and one taken out of the
+            // configuration does not stay lost for good.
+            var lostRecords = sorted.Where(e => (GatewayLogCodes)e.LogCode == GatewayLogCodes.Hvac_CommunicationLostChanged);
+            foreach (var unitId in lostRecords.Select(e => e.Device.Id).Distinct())
+            {
+                var unitRecords = sorted.Where(e => (GatewayLogCodes)e.LogCode == GatewayLogCodes.x02_MAIN_STARTED
+                    || ((GatewayLogCodes)e.LogCode == GatewayLogCodes.Hvac_CommunicationLostChanged && e.Device.Id == unitId));
+                periods.AddRange(ReportedPeriods(unitRecords.ToList(), until, CommunicationProblems.IndoorUnitLost,
+                    GatewayLogCodes.Hvac_CommunicationLostChanged, endedBy: GatewayLogCodes.x02_MAIN_STARTED));
+            }
+
             return ToTimeline(periods, from);
         }
 
@@ -60,6 +74,7 @@ namespace LogViewer.Mapping
             if (problems.HasFlag(CommunicationProblems.OpenThermTimeout)) parts.Add("OT TIMEOUT");
             if (problems.HasFlag(CommunicationProblems.ModbusError)) parts.Add("MODBUS ERR");
             if (problems.HasFlag(CommunicationProblems.IndoorUnitFault)) parts.Add("UNIT FAULT");
+            if (problems.HasFlag(CommunicationProblems.IndoorUnitLost)) parts.Add("UNIT LOST");
             return string.Join(" + ", parts);
         }
 
@@ -83,13 +98,15 @@ namespace LogViewer.Mapping
                 yield return (lastSeen, until, problem);
         }
 
+        /// <param name="endedBy">A code that ends the state whatever its value, such as a boot.</param>
         private static IEnumerable<(DateTime, DateTime, CommunicationProblems)> ReportedPeriods(
-            List<LogEntry> sorted, DateTime until, CommunicationProblems problem, GatewayLogCodes code)
+            List<LogEntry> sorted, DateTime until, CommunicationProblems problem, GatewayLogCodes code,
+            GatewayLogCodes? endedBy = null)
         {
             DateTime? activeSince = null;
-            foreach (var entry in sorted.Where(e => (GatewayLogCodes)e.LogCode == code))
+            foreach (var entry in sorted.Where(e => (GatewayLogCodes)e.LogCode == code || (GatewayLogCodes)e.LogCode == endedBy))
             {
-                bool active = (entry.Measurement ?? 0) != 0;
+                bool active = (GatewayLogCodes)entry.LogCode == code && (entry.Measurement ?? 0) != 0;
                 if (active && activeSince == null)
                     activeSince = entry.TimeStamp;
                 else if (!active && activeSince != null)

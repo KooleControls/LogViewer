@@ -130,5 +130,6 @@
         Hvac_RemoteCTRLChanged = 0xA000_0807,
         Hvac_HeatingActiveChanged = 0xA000_0808,
         Hvac_CoolingActiveChanged = 0xA000_0809,
+        Hvac_CommunicationLostChanged = 0xA000_080A,   // 1 = unit does not answer the gateway, 0 = answering again
     }
 }
