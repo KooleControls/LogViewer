@@ -3,6 +3,11 @@
 Notable changes to LogViewer. Release downloads:
 https://github.com/KooleControls/LogViewer/releases
 
+## Unreleased
+
+### Fixed
+- **Device tab: install code.** The gateway keys its KC2 encryption with its installation code, but the Device tab always used `000000`. On any other gateway it connected, yet no reply could be decrypted, so it fetched 0 lines without an error. The tab now has an **Install code** field (default `000000`, the gateway's `DIST` reply), filled in automatically when you double-click a discovered device. Discovered devices also get their name and version with their own install code.
+
 ## v3.11.0
 
 ### Changed

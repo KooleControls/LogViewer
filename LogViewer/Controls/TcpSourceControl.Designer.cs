@@ -29,6 +29,8 @@ namespace LogViewer.Controls
             txtHost = new TextBox();
             lblPort = new Label();
             txtPort = new TextBox();
+            lblInstallCode = new Label();
+            txtInstallCode = new TextBox();
             chkEncryption = new CheckBox();
             lblLookBack = new Label();
             numLookBack = new NumericUpDown();
@@ -74,71 +76,89 @@ namespace LogViewer.Controls
             txtPort.TabIndex = 3;
             txtPort.Text = "31700";
             //
+            // lblInstallCode
+            //
+            lblInstallCode.AutoSize = true;
+            lblInstallCode.Location = new Point(8, 108);
+            lblInstallCode.Name = "lblInstallCode";
+            lblInstallCode.Size = new Size(70, 15);
+            lblInstallCode.TabIndex = 4;
+            lblInstallCode.Text = "Install code";
+            //
+            // txtInstallCode
+            //
+            txtInstallCode.Location = new Point(8, 126);
+            txtInstallCode.MaxLength = 6;
+            txtInstallCode.Name = "txtInstallCode";
+            txtInstallCode.Size = new Size(260, 23);
+            txtInstallCode.TabIndex = 5;
+            txtInstallCode.Text = "000000";
+            //
             // chkEncryption
             //
             chkEncryption.AutoSize = true;
             chkEncryption.Checked = true;
             chkEncryption.CheckState = CheckState.Checked;
-            chkEncryption.Location = new Point(8, 112);
+            chkEncryption.Location = new Point(8, 160);
             chkEncryption.Name = "chkEncryption";
             chkEncryption.Size = new Size(89, 19);
-            chkEncryption.TabIndex = 4;
+            chkEncryption.TabIndex = 6;
             chkEncryption.Text = "Encryption";
             chkEncryption.UseVisualStyleBackColor = true;
             //
             // lblLookBack
             //
             lblLookBack.AutoSize = true;
-            lblLookBack.Location = new Point(8, 142);
+            lblLookBack.Location = new Point(8, 190);
             lblLookBack.Name = "lblLookBack";
             lblLookBack.Size = new Size(96, 15);
-            lblLookBack.TabIndex = 5;
+            lblLookBack.TabIndex = 7;
             lblLookBack.Text = "Look back (lines)";
             //
             // numLookBack
             //
-            numLookBack.Location = new Point(8, 160);
+            numLookBack.Location = new Point(8, 208);
             numLookBack.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
             numLookBack.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             numLookBack.Name = "numLookBack";
             numLookBack.Size = new Size(260, 23);
-            numLookBack.TabIndex = 6;
+            numLookBack.TabIndex = 8;
             numLookBack.Value = new decimal(new int[] { 250, 0, 0, 0 });
             //
             // btnConnect
             //
-            btnConnect.Location = new Point(8, 196);
+            btnConnect.Location = new Point(8, 244);
             btnConnect.Name = "btnConnect";
             btnConnect.Size = new Size(260, 30);
-            btnConnect.TabIndex = 7;
+            btnConnect.TabIndex = 9;
             btnConnect.Text = "Connect";
             btnConnect.UseVisualStyleBackColor = true;
             //
             // lblPollInterval
             //
             lblPollInterval.AutoSize = true;
-            lblPollInterval.Location = new Point(8, 244);
+            lblPollInterval.Location = new Point(8, 292);
             lblPollInterval.Name = "lblPollInterval";
             lblPollInterval.Size = new Size(86, 15);
-            lblPollInterval.TabIndex = 8;
+            lblPollInterval.TabIndex = 10;
             lblPollInterval.Text = "Poll interval: -";
             //
             // lblFetched
             //
             lblFetched.AutoSize = true;
-            lblFetched.Location = new Point(8, 266);
+            lblFetched.Location = new Point(8, 314);
             lblFetched.Name = "lblFetched";
             lblFetched.Size = new Size(95, 15);
-            lblFetched.TabIndex = 9;
+            lblFetched.TabIndex = 11;
             lblFetched.Text = "Lines fetched: 0";
             //
             // lblDevices
             //
             lblDevices.AutoSize = true;
-            lblDevices.Location = new Point(8, 296);
+            lblDevices.Location = new Point(8, 344);
             lblDevices.Name = "lblDevices";
             lblDevices.Size = new Size(230, 15);
-            lblDevices.TabIndex = 10;
+            lblDevices.TabIndex = 12;
             lblDevices.Text = "Discovered devices (double-click to connect)";
             //
             // lstDevices
@@ -147,10 +167,10 @@ namespace LogViewer.Controls
             lstDevices.DrawMode = DrawMode.OwnerDrawFixed;
             lstDevices.IntegralHeight = false;
             lstDevices.ItemHeight = 44;
-            lstDevices.Location = new Point(8, 316);
+            lstDevices.Location = new Point(8, 364);
             lstDevices.Name = "lstDevices";
             lstDevices.Size = new Size(260, 320);
-            lstDevices.TabIndex = 11;
+            lstDevices.TabIndex = 13;
             //
             // TcpSourceControl
             //
@@ -164,12 +184,14 @@ namespace LogViewer.Controls
             Controls.Add(numLookBack);
             Controls.Add(lblLookBack);
             Controls.Add(chkEncryption);
+            Controls.Add(txtInstallCode);
+            Controls.Add(lblInstallCode);
             Controls.Add(txtPort);
             Controls.Add(lblPort);
             Controls.Add(txtHost);
             Controls.Add(lblHost);
             Name = "TcpSourceControl";
-            Size = new Size(282, 985);
+            Size = new Size(282, 692);
             ((System.ComponentModel.ISupportInitialize)numLookBack).EndInit();
             ResumeLayout(false);
             PerformLayout();
@@ -181,6 +203,8 @@ namespace LogViewer.Controls
         private TextBox txtHost;
         private Label lblPort;
         private TextBox txtPort;
+        private Label lblInstallCode;
+        private TextBox txtInstallCode;
         private CheckBox chkEncryption;
         private Label lblLookBack;
         private NumericUpDown numLookBack;

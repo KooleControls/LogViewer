@@ -4,6 +4,7 @@ using LogViewer.Logging;
 using LogViewer.Providers.Tcp;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Text;
 
 namespace LogViewer.Controls
 {
@@ -76,12 +77,21 @@ namespace LogViewer.Controls
             bool encrypted = chkEncryption.Checked;
             int lookBack = (int)numLookBack.Value;
 
+            // The device keys its encryption with its installation code (DIST), so a wrong code
+            // connects fine but no reply can be decrypted.
+            string installCode = txtInstallCode.Text.Trim();
+            if (encrypted && installCode.Length != 6)
+            {
+                MessageBox.Show("Install code must be 6 characters.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             UpdateState(State.Connecting);
 
             cancellationTokenSource = new CancellationTokenSource();
             var token = cancellationTokenSource.Token;
 
-            client = new Kc2Client(encrypted);
+            client = new Kc2Client(encrypted, encrypted ? Encoding.ASCII.GetBytes(installCode) : null);
 
             bool connected;
             try
@@ -280,6 +290,7 @@ namespace LogViewer.Controls
 
             txtHost.Text = device.Ip;
             txtPort.Text = device.Kc2Port.ToString();
+            txtInstallCode.Text = device.InstallCode;
 
             // Drop any current connection, then connect to the picked device.
             if (state == State.Connected)
@@ -360,6 +371,7 @@ namespace LogViewer.Controls
         {
             txtHost.Enabled = enabled;
             txtPort.Enabled = enabled;
+            txtInstallCode.Enabled = enabled;
             chkEncryption.Enabled = enabled;
             numLookBack.Enabled = enabled;
         }

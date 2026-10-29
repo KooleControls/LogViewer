@@ -1,4 +1,5 @@
 using LogViewer.Devices.Gateway.Kc2;
+using System.Text;
 
 namespace LogViewer.Providers.Tcp
 {
@@ -12,7 +13,9 @@ namespace LogViewer.Providers.Tcp
     {
         public static async Task EnrichAsync(DiscoveredDevice device, bool encrypted, CancellationToken token)
         {
-            using var client = new Kc2Client(encrypted);
+            // The device keys its encryption with its installation code, which the broadcast carries.
+            byte[]? privateKey = device.InstallCode.Length == 6 ? Encoding.ASCII.GetBytes(device.InstallCode) : null;
+            using var client = new Kc2Client(encrypted, privateKey);
 
             if (!await client.ConnectAsync(device.Ip, device.Kc2Port, token))
                 return;
