@@ -5,6 +5,7 @@ using LogViewer.Providers.Tcp;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
+using System.Windows.Forms.VisualStyles;
 
 namespace LogViewer.Controls
 {
@@ -15,6 +16,8 @@ namespace LogViewer.Controls
     public partial class TcpSourceControl : UserControl
     {
         private const int PollIntervalMs = 1000;
+        private const int CardPad = 7;
+        private const string GetNameText = "Get name";
 
         private CancellationTokenSource? cancellationTokenSource;
         private Kc2Client? client;
@@ -24,6 +27,7 @@ namespace LogViewer.Controls
         private DeviceDiscoveryListener? discovery;
         private CancellationTokenSource? discoveryCts;
         private readonly Dictionary<string, DiscoveredDevice> devicesByIp = new();
+        private readonly HashSet<DiscoveredDevice> devicesBeingQueried = new();
 
         public event EventHandler<LogEntry>? OnLogReceived;
 
@@ -35,6 +39,7 @@ namespace LogViewer.Controls
             InitializeComponent();
             btnConnect.Click += BtnConnect_Click;
             lstDevices.DrawItem += LstDevices_DrawItem;
+            lstDevices.MouseClick += LstDevices_MouseClick;
             lstDevices.DoubleClick += LstDevices_DoubleClick;
             UpdateState(State.Disconnected);
             StartDiscovery();
@@ -207,12 +212,16 @@ namespace LogViewer.Controls
             }
             devicesByIp[device.Ip] = device;
 
-            // Fill in name/version/SID (re-query on every broadcast in case the device rebooted).
-            _ = EnrichDeviceAsync(device);
+            // Name/version/SID are only queried when the user clicks "Get name": querying opens a
+            // KC2 connection, which would disturb tests and other people's devices on the network.
         }
 
         private async Task EnrichDeviceAsync(DiscoveredDevice device)
         {
+            if (!devicesBeingQueried.Add(device))
+                return;
+            RefreshCard(device);
+
             bool encrypted = chkEncryption.Checked;
             var parentToken = discoveryCts?.Token ?? CancellationToken.None;
 
@@ -227,7 +236,37 @@ namespace LogViewer.Controls
                 // Best-effort: leave whatever we managed to read.
             }
 
-            RunOnUi(() => RefreshCard(device));
+            RunOnUi(() =>
+            {
+                devicesBeingQueried.Remove(device);
+                RefreshCard(device);
+            });
+        }
+
+        /// <summary>True while the card still offers "Get name": not queried yet, or the query got nothing.</summary>
+        private bool ShowsNameButton(DiscoveredDevice device) =>
+            !devicesBeingQueried.Contains(device) && device.Name == null && device.Version == null && device.Sid == null;
+
+        /// <summary>Where a card's "Get name" button sits: right-aligned on the title line.</summary>
+        private Rectangle GetNameButtonBounds(Rectangle card)
+        {
+            int width = TextRenderer.MeasureText(GetNameText, lstDevices.Font).Width + 10;
+            return new Rectangle(card.Right - CardPad - width, card.Top + 3, width, lstDevices.Font.Height + 2);
+        }
+
+        /// <summary>The device whose "Get name" button area contains <paramref name="point"/>, or null.</summary>
+        private DiscoveredDevice? DeviceAtNameButton(Point point)
+        {
+            int idx = lstDevices.IndexFromPoint(point);
+            if (idx < 0 || lstDevices.Items[idx] is not DiscoveredDevice device)
+                return null;
+            return GetNameButtonBounds(lstDevices.GetItemRectangle(idx)).Contains(point) ? device : null;
+        }
+
+        private void LstDevices_MouseClick(object? sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left && DeviceAtNameButton(e.Location) is DiscoveredDevice device && ShowsNameButton(device))
+                _ = EnrichDeviceAsync(device);
         }
 
         /// <summary>Repaint just the card for <paramref name="device"/>, if it's still listed.</summary>
@@ -253,22 +292,35 @@ namespace LogViewer.Controls
             using var titleFont = new Font(lstDevices.Font, FontStyle.Bold);
             using var subFont = new Font(lstDevices.Font.FontFamily, lstDevices.Font.Size - 0.5f);
 
-            const int pad = 7;
+            const int pad = CardPad;
             int left = e.Bounds.Left + pad;
             int line1Y = e.Bounds.Top + 5;
             int line2Y = line1Y + titleFont.Height + 1;
             var flags = TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis;
 
-            // Line 1: gateway name (left) + version (right).
+            // Line 1: gateway name (left) + version, or the "Get name" button (right).
             string name = string.IsNullOrEmpty(d.Name) ? "KC gateway" : d.Name!;
-            string version = d.Version != null ? "v" + d.Version : "…";
-            Size vSize = TextRenderer.MeasureText(e.Graphics, version, subFont);
-            int nameWidth = e.Bounds.Right - pad - vSize.Width - left - 6;
+            int rightEdge;
+            if (ShowsNameButton(d))
+            {
+                Rectangle button = GetNameButtonBounds(e.Bounds);
+                ButtonRenderer.DrawButton(e.Graphics, button, GetNameText, subFont,
+                    TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter,
+                    false, PushButtonState.Normal);
+                rightEdge = button.Left;
+            }
+            else
+            {
+                string version = devicesBeingQueried.Contains(d) ? "…" : d.Version != null ? "v" + d.Version : "";
+                Size vSize = TextRenderer.MeasureText(e.Graphics, version, subFont);
+                rightEdge = e.Bounds.Right - pad - vSize.Width;
+                TextRenderer.DrawText(e.Graphics, version, subFont,
+                    new Point(rightEdge, line1Y + 2), dim, TextFormatFlags.NoPrefix);
+            }
 
+            int nameWidth = rightEdge - left - 6;
             TextRenderer.DrawText(e.Graphics, name, titleFont,
                 new Rectangle(left, line1Y, Math.Max(nameWidth, 20), titleFont.Height), fg, flags);
-            TextRenderer.DrawText(e.Graphics, version, subFont,
-                new Point(e.Bounds.Right - pad - vSize.Width, line1Y + 2), dim, TextFormatFlags.NoPrefix);
 
             // Line 2: IP · install · SID.
             string line2 = $"{d.Ip}   ·   Inst {d.InstallCode}";
@@ -286,6 +338,12 @@ namespace LogViewer.Controls
         private async void LstDevices_DoubleClick(object? sender, EventArgs e)
         {
             if (lstDevices.SelectedItem is not DiscoveredDevice device)
+                return;
+
+            // A double-click on "Get name" is just an impatient click: its first click already
+            // started the query, so don't also connect.
+            if (DeviceAtNameButton(lstDevices.PointToClient(Cursor.Position)) is DiscoveredDevice clicked
+                && (ShowsNameButton(clicked) || devicesBeingQueried.Contains(clicked)))
                 return;
 
             txtHost.Text = device.Ip;

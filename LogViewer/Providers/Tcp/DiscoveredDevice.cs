@@ -8,7 +8,7 @@ namespace LogViewer.Providers.Tcp
     /// <c>NetworkManager::SendHello</c>) carries only the sender IP, the 6-char
     /// installation code, and the KC1/KC2 TCP server ports. The gateway name,
     /// firmware version and software id (SID) are NOT in the broadcast - they are
-    /// filled in afterwards by briefly connecting over KC2 (see <see cref="DeviceEnricher"/>).
+    /// filled in on request ("Get name") by briefly connecting over KC2 (see <see cref="DeviceEnricher"/>).
     /// </summary>
     public class DiscoveredDevice
     {
