@@ -79,25 +79,20 @@ namespace CoreLib.Ethernet
         public async Task<bool> ConnectAsync(IPEndPoint ep, CancellationToken token = default)
         {
             ConnectionState = ConnectionStates.Connecting;
-            TaskCompletionSource<Socket> taskCompletionSource = new TaskCompletionSource<Socket>();
 
             if (globalSocket != null)
                 globalSocket.Close();
 
             globalSocket = new Socket(ep.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
-            token.Register(() =>
-            {
-                taskCompletionSource.TrySetCanceled();
-            });
-
             bool result = false;
             try
             {
-                globalSocket.BeginConnect(ep, (res) => taskCompletionSource.SetResult(res.AsyncState as Socket), globalSocket);
-                Socket sock = await taskCompletionSource.Task;
-                result = HandleNewConnection(sock);
-                ConnectionState = ConnectionStates.Connected;
+                // Cancelling the token aborts the pending connect itself, so a connect attempt that
+                // outlives the caller's timeout can no longer complete (and crash on) a finished task.
+                await globalSocket.ConnectAsync(ep, token);
+                result = HandleNewConnection(globalSocket);
+                ConnectionState = result ? ConnectionStates.Connected : ConnectionStates.Error;
             }
             catch (OperationCanceledException ex)
             {

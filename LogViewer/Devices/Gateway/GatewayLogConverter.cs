@@ -169,6 +169,7 @@ namespace LogViewer.Devices.Gateway
                 case GatewayLogCodes.Hvac_RemoteCTRLChanged:
                 case GatewayLogCodes.Hvac_HeatingActiveChanged:
                 case GatewayLogCodes.Hvac_CoolingActiveChanged:
+                case GatewayLogCodes.Hvac_CommunicationLostChanged:
                     logEntry.Device.Type =DeviceType.HvacUnit;
                     logEntry.Device.Id =data[3];
                     logEntry.Measurement = BitConverter.ToUInt16(data, 4);

@@ -3,6 +3,7 @@ using LogViewer.Devices.Gateway;
 using LogViewer.Logging;
 using LogViewer.Mapping.Interfaces;
 using LogViewer.Mapping.Models;
+using System.Text.RegularExpressions;
 using static FormsLib.Scope.Trace;
 
 namespace LogViewer.Mapping.Mappers
@@ -11,6 +12,13 @@ namespace LogViewer.Mapping.Mappers
     {
         public bool Map(LogEntry entry, ITraceBuilder builder)
         {
+            // The boot itself is the GatewayMapper's; this only resets what a boot resets.
+            if (entry.AsGatewayLogCode() == GatewayLogCodes.x02_MAIN_STARTED)
+            {
+                ResetCommunication(builder, entry);
+                return false;
+            }
+
             if (entry.Device.Type != DeviceType.HvacUnit)
                 return false;
 
@@ -36,6 +44,9 @@ namespace LogViewer.Mapping.Mappers
                     return true;
                 case GatewayLogCodes.Hvac_FaultCodeChanged:
                     MapFaultCode(builder, entry, id);
+                    return true;
+                case GatewayLogCodes.Hvac_CommunicationLostChanged:
+                    MapCommunicationLost(builder, entry, id);
                     return true;
             }
             return false;
@@ -166,6 +177,45 @@ namespace LogViewer.Mapping.Mappers
             trace.Trace.Points.Add(new PointD(
                 entry.TimeStamp.Ticks,
                 entry.Measurement ?? 0));
+        }
+
+        private void MapCommunicationLost(ITraceBuilder builder, LogEntry entry, int id)
+        {
+            var descriptor = new TraceDescriptor
+            {
+                TraceId = $"HVAC{id}_Communication",
+                Category = "State",
+                EntityId = $"HVAC:{id}",
+                DrawStyle = DrawStyles.State,
+                DrawOption = DrawOptions.DrawNames | DrawOptions.ExtendEnd,
+                BaseColor = Color.FromArgb(unchecked((int)0xFFD50000)),
+                ToHumanReadable = d => d == 0.0 ? "Responding" : "Not responding",
+                Source = nameof(HvacMapper)
+            };
+
+            var trace = builder.GetOrCreate(descriptor);
+            trace.Trace.Points.Add(new PointD(
+                entry.TimeStamp.Ticks,
+                entry.Measurement ?? 0));
+        }
+
+        /// <summary>
+        /// After a boot the gateway counts every unit as not responding until it answers, and logs
+        /// each unit's state once it has polled it. So a boot puts every unit back at "Not
+        /// responding", and a "Responding" from before the boot does not carry over. Only this
+        /// gateway's traces: the builder qualifies them with the parent.
+        /// </summary>
+        private static void ResetCommunication(ITraceBuilder builder, LogEntry entry)
+        {
+            string suffix = entry.Device.Parent is null ? "" : $"@{entry.Device.Parent}";
+            var traces = builder.Traces.Where(t =>
+                t.Descriptor.Source == nameof(HvacMapper)
+                && Regex.IsMatch(t.Descriptor.TraceId, $@"^HVAC\d+_Communication{Regex.Escape(suffix)}$")
+                && t.Trace.Points.Count > 0
+                && t.Trace.Points[^1].Y == 0);
+
+            foreach (var trace in traces)
+                trace.Trace.Points.Add(new PointD(entry.TimeStamp.Ticks, 1));
         }
     }
 }
