@@ -3,7 +3,7 @@
 Notable changes to LogViewer. Release downloads:
 https://github.com/KooleControls/LogViewer/releases
 
-## Unreleased
+## v3.12.0
 
 ### Added
 - **Heating and cooling inhibit traces.** Gateway firmware with RA2-626 logs when the heating or cooling inhibit (window contact on input 1 or 2) starts and stops blocking, after its polarity and on-delay. They show as `GIO0_HeatingInhibit` and `GIO0_CoolingInhibit` with the states **Free** and **Blocked**, next to the input and relay traces. The same firmware logs the level of both inputs after every restart, so the input traces have a value even when a contact never switches. (RA2-626)
