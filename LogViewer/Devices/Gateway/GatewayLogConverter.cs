@@ -132,6 +132,9 @@ namespace LogViewer.Devices.Gateway
                 case GatewayLogCodes.Input2Changed:
                 case GatewayLogCodes.Relais1Changed:
                 case GatewayLogCodes.Relais2Changed:
+                // The inhibit inputs after polarity and on-delay: 1 blocked, 0 free (RA2-626).
+                case GatewayLogCodes.HeatingInhibitChanged:
+                case GatewayLogCodes.CoolingInhibitChanged:
                     logEntry.Device.Type =DeviceType.Gateway;
                     logEntry.Device.Id =0;
                     logEntry.Measurement = BitConverter.ToBoolean(data, 3) ? 1 : 0;

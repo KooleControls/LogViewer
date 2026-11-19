@@ -31,6 +31,12 @@ namespace LogViewer.Mapping.Mappers
                 case GatewayLogCodes.Input2Changed:
                     MapInput(builder, entry, id, 2, GatewayLogCodes.Input2Changed);
                     return true;
+                case GatewayLogCodes.HeatingInhibitChanged:
+                    MapInhibit(builder, entry, id, "Heating");
+                    return true;
+                case GatewayLogCodes.CoolingInhibitChanged:
+                    MapInhibit(builder, entry, id, "Cooling");
+                    return true;
             }
             return false;
         }
@@ -46,6 +52,29 @@ namespace LogViewer.Mapping.Mappers
                 DrawOption = DrawOptions.DrawNames | DrawOptions.ExtendEnd,
                 BaseColor = Color.FromArgb(unchecked((int)0xFF008FFF)),
                 ToHumanReadable = d => d == 0.0 ? "Off" : "On",
+                Source = nameof(GatewayGpioMapper)
+            };
+
+            var trace = builder.GetOrCreate(descriptor);
+
+            trace.Trace.Points.Add(new PointD(
+                entry.TimeStamp.Ticks,
+                entry.Measurement ?? 0));
+        }
+
+        // What the heat loop makes of an inhibit input, after polarity and on-delay. The
+        // input traces show the contact; this one shows when it starts and stops blocking.
+        private void MapInhibit(ITraceBuilder builder, LogEntry entry, int id, string what)
+        {
+            var descriptor = new TraceDescriptor
+            {
+                TraceId = $"GIO{id}_{what}Inhibit",
+                Category = "State",
+                EntityId = $"GIO:{id}",
+                DrawStyle = DrawStyles.State,
+                DrawOption = DrawOptions.DrawNames | DrawOptions.ExtendEnd,
+                BaseColor = Color.FromArgb(unchecked((int)0xFFFF8000)),
+                ToHumanReadable = d => d == 0.0 ? "Free" : "Blocked",
                 Source = nameof(GatewayGpioMapper)
             };
 

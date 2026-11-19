@@ -5,6 +5,9 @@ https://github.com/KooleControls/LogViewer/releases
 
 ## Unreleased
 
+### Added
+- **Heating and cooling inhibit traces.** Gateway firmware with RA2-626 logs when the heating or cooling inhibit (window contact on input 1 or 2) starts and stops blocking, after its polarity and on-delay. They show as `GIO0_HeatingInhibit` and `GIO0_CoolingInhibit` with the states **Free** and **Blocked**, next to the input and relay traces. The same firmware logs the level of both inputs after every restart, so the input traces have a value even when a contact never switches. (RA2-626)
+
 ### Changed
 - **Device tab: no automatic queries on discovery.** A discovered device was immediately contacted over KC2 to read its name, version and SID, which opened a connection and handshake on every gateway that broadcast a hello. That disturbed tests and other people's devices. Each discovered device now has a **Get name** button on its line, and the device is only contacted when you click it.
 
