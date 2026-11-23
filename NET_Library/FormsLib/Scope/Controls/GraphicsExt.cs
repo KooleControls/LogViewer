@@ -15,6 +15,26 @@
             }
             return height;
         }
+
+        static readonly Dictionary<(Font, string), int> textWidthTable = new Dictionary<(Font, string), int>();
+
+        /// <summary>
+        /// Width <see cref="TextRenderer"/> needs for <paramref name="text"/>. Cached, because labels
+        /// repeat the same handful of texts thousands of times and measuring is a GDI round trip.
+        /// </summary>
+        public static int GetTextWidth(string text, Font font)
+        {
+            if (!textWidthTable.TryGetValue((font, text), out int width))
+            {
+                // Label texts are normally a small set of codes; don't let unusual ones grow this forever.
+                if (textWidthTable.Count > 10000)
+                    textWidthTable.Clear();
+                width = TextRenderer.MeasureText(text, font, Size.Empty, TextFormatFlags.NoPadding).Width;
+                textWidthTable[(font, text)] = width;
+            }
+            return width;
+        }
+
         public static void DrawArrow(this Graphics g, Pen p, Point pt, double xDir, double yDir, float size)
         {
             PointF[] fig = {
@@ -291,6 +311,24 @@
             // Draw the text inside the rectangle
             Rectangle textRect = new Rectangle(rect.X + spaceBegin, rect.Y, rect.Width - spaceBegin - spaceEnd, rect.Height);
             DrawFitTextToRectangle(g, p, viewPort, textRect, text, font);
+        }
+
+        /// <summary>
+        /// A stretch of states too short to draw one by one (see <see cref="Trace.MinStateSegmentWidth"/>):
+        /// one hatched band from <paramref name="left"/> to <paramref name="right"/>, so a burst of
+        /// transitions reads as "busy here" instead of as a smear of brackets.
+        /// </summary>
+        public static void DrawStateRun(this Graphics g, Pen p, Brush hatch, Rectangle viewPort, int left, int right, int top, int height)
+        {
+            // Same horizontal bounds DrawState keeps to, so the band lines up with the bars around it.
+            left = Math.Max(left, viewPort.X + 5);
+            right = Math.Min(right, viewPort.X + viewPort.Width - 5);
+            if (right < left)
+                return;
+
+            Rectangle rect = new Rectangle(left, top, right - left, height);
+            g.FillRectangle(hatch, rect);
+            g.DrawRectangle(p, rect);
         }
 
 
