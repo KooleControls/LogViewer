@@ -3,6 +3,12 @@
 Notable changes to LogViewer. Release downloads:
 https://github.com/KooleControls/LogViewer/releases
 
+## Unreleased
+
+### Changed
+- **Faster scope view.** A day of gateway logging could take around 200 ms per frame, so panning, zooming and Ctrl-hover lagged. The view now keeps its rendered data and only redraws it when the view or the data changes. Moving a marker or the hover popup no longer redraws the data, and panning and zooming draw several times faster.
+- **Dense stretches are drawn simplified.** State changes too close together to tell apart (under 4 px each) are drawn as one hatched band instead of a smear of brackets. A label's text is left out where it would print over another label's text in the same row; its cross is still drawn and Ctrl-hover still lists it. Zoom in to see each change and label.
+
 ## v3.12.0
 
 ### Added

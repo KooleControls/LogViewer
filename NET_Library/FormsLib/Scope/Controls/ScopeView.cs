@@ -18,7 +18,7 @@ namespace FormsLib.Scope.Controls
                 dataSource = value;
                 if (dataSource != null)
                 {
-                    dataSource.Settings.PropertyChanged += (a, b) => this.InvokeIfRequired(() => DrawBackground());
+                    dataSource.Settings.PropertyChanged += (a, b) => DrawAll();
                     //dataSource.Traces.ListChanged += Traces_ListChanged;
                     dataSource.Markers.ListChanged += Markers_ListChanged;
                     dataSource.DoRedraw += (a, b) => DrawAll();
@@ -40,37 +40,35 @@ namespace FormsLib.Scope.Controls
         int zeroPos;    //Position in px that represents vertical zero
 
 
-        PictureBox pictureBox1 = new PictureBox();
-        PictureBox pictureBox2 = new PictureBox();
-        PictureBox pictureBox3 = new PictureBox();
+        /// <summary>
+        /// The one surface everything is painted on. Background and data are rendered into
+        /// <see cref="dataLayer"/> only when something they show changes; every paint copies that
+        /// and draws the foreground (markers, Ctrl-hover popup) on top. This replaces three stacked
+        /// transparent PictureBoxes, whose transparency made each of them repaint the ones below -
+        /// so moving a marker or the hover popup re-rendered all the data every time.
+        /// </summary>
+        readonly PictureBox canvas = new PictureBox();
+        readonly BufferedGraphicsContext dataLayerContext = new BufferedGraphicsContext();
+        BufferedGraphics? dataLayer;
+        Size dataLayerSize;
+        bool dataLayerDirty = true;
 
         public ScopeView()
         {
             InitializeComponent();
-            DrawAll();
 
-            this.Controls.Add(pictureBox1);
-            pictureBox1.Controls.Add(pictureBox2);
-            pictureBox2.Controls.Add(pictureBox3);
+            this.Controls.Add(canvas);
+            canvas.Dock = DockStyle.Fill;
+            canvas.Paint += Canvas_Paint;
 
-            pictureBox1.Dock = DockStyle.Fill;
-            pictureBox2.Dock = DockStyle.Fill;
-            pictureBox3.Dock = DockStyle.Fill;
+            // Releasing Ctrl only has to take the hover circle and popup away.
+            KeyUp += (s, e) => DrawForeground();
 
-
-            pictureBox1.BackColor = Color.Transparent;
-            pictureBox2.BackColor = Color.Transparent;
-            pictureBox3.BackColor = Color.Transparent;
-
-            pictureBox1.Paint += PictureBox1_Paint;
-            pictureBox2.Paint += PictureBox2_Paint;
-            pictureBox3.Paint += PictureBox3_Paint;
-
-            KeyUp += (s, e) => DrawAll();
-
-            pictureBox1.BringToFront();
-            pictureBox2.BringToFront();
-            pictureBox3.BringToFront();
+            Disposed += (s, e) =>
+            {
+                dataLayer?.Dispose();
+                dataLayerContext.Dispose();
+            };
 
             menu = new ContextMenuStrip();
 
@@ -139,7 +137,7 @@ namespace FormsLib.Scope.Controls
 
         private void Screenshot_Click(bool toClipboard)
         {
-            Image img = new Bitmap(pictureBox1.Size.Width, pictureBox1.Size.Height);
+            Image img = new Bitmap(canvas.Size.Width, canvas.Size.Height);
             using (Graphics g = Graphics.FromImage(img))
             {
                 DrawBackground(g);
@@ -254,18 +252,16 @@ namespace FormsLib.Scope.Controls
             DrawAll();
 
 
-            pictureBox3.MouseClick += picBox_MouseClick;
-            pictureBox3.MouseMove += picBox_MouseMove;
-            pictureBox3.MouseDown += picBox_MouseDown;
-            pictureBox3.MouseUp += picBox_MouseUp;
-            pictureBox3.MouseWheel += PictureBox3_MouseWheel;
-
-            //pictureBox1.Resize += PictureBox1_Resize;
+            canvas.MouseClick += picBox_MouseClick;
+            canvas.MouseMove += picBox_MouseMove;
+            canvas.MouseDown += picBox_MouseDown;
+            canvas.MouseUp += picBox_MouseUp;
+            canvas.MouseWheel += Canvas_MouseWheel;
         }
 
 
 
-        private void PictureBox3_MouseWheel(object sender, MouseEventArgs e)
+        private void Canvas_MouseWheel(object sender, MouseEventArgs e)
         {
             if (e.Delta != 0)
             {
@@ -616,19 +612,13 @@ namespace FormsLib.Scope.Controls
 
         #region Drawing
 
-        private void DrawBackground()
-        {
-            pictureBox1.InvokeIfRequired(() => pictureBox1.Refresh());
-           
-        }
-
         private void DrawBackground(Graphics g)
         {
             var stopwatch = Stopwatch.StartNew();
             viewPort.X = 0;
             viewPort.Y = 0;
-            viewPort.Width = pictureBox1.Width - 1;
-            viewPort.Height = pictureBox1.Height - 1;
+            viewPort.Width = canvas.Width - 1;
+            viewPort.Height = canvas.Height - 1;
 
             int spaceForScaleIndicatorsVertical = 80;
             int spaceForScaleIndicatorsHorizontal = 25;
@@ -802,12 +792,6 @@ namespace FormsLib.Scope.Controls
 #endif
         }
 
-        private void DrawData()
-        {
-
-            pictureBox2.InvokeIfRequired(() => pictureBox2.Refresh());
-        }
-
         private void DrawData(Graphics g)
         {
             var stopwatch = Stopwatch.StartNew();
@@ -832,7 +816,7 @@ namespace FormsLib.Scope.Controls
                     max.KeepMaximum(t.Maximum);
                 }
 
-                double xLeft = dataSource.Settings.HorOffset;
+                double xLeft = -dataSource.Settings.HorOffset;
                 double xRight = ((viewPort.Width) / pxPerUnits_hor) - dataSource.Settings.HorOffset;
 
                 //Loop through traces
@@ -853,37 +837,60 @@ namespace FormsLib.Scope.Controls
                     }
                 }
 
+                // Each trace is a row of labels; a label leaves out what would only overprint what
+                // the labels before it in its row drew (see Label.Draw). Free labels share one row.
+                var traces = new HashSet<Trace>(dataSource.Traces);
+                var rows = new Dictionary<object, LabelRow>();
+                object freeLabelRow = new object();
+                var pens = new Dictionary<Color, Pen>();
+                Style style = dataSource.Settings.Style;
                 try
                 {
                     foreach (Label marker in dataSource.Labels)
                     {
+                        Func<PointD, Point> convert;
+                        object rowKey;
                         if (marker is LinkedLabel lm)
                         {
-                            if (dataSource.Traces.Contains(lm.Trace))
-                            {
-                                double pxPerUnits_ver = viewPort.Height / (dataSource.Settings.VerticalDivisions * lm.Trace.Scale);
-                                Func<PointD, Point> convert = (p) => new Point(
-                                    (int)((p.X + dataSource.Settings.HorOffset) * pxPerUnits_hor) + viewPort.X,
-                                    (int)(zeroPos - (p.Y + lm.Trace.Offset) * pxPerUnits_ver));
+                            if (!traces.Contains(lm.Trace))
+                                continue;
 
-                                marker.Draw(g, dataSource.Settings.Style, viewPort, convert);
-                            }
+                            double pxPerUnits_ver = viewPort.Height / (dataSource.Settings.VerticalDivisions * lm.Trace.Scale);
+                            double traceOffset = lm.Trace.Offset;
+                            convert = (p) => new Point(
+                                (int)((p.X + dataSource.Settings.HorOffset) * pxPerUnits_hor) + viewPort.X,
+                                (int)(zeroPos - (p.Y + traceOffset) * pxPerUnits_ver));
+                            rowKey = lm.Trace;
                         }
                         else if (marker is FreeLabel fm)
                         {
                             double pxPerUnits_ver = viewPort.Height / (dataSource.Settings.VerticalDivisions * 1);
-                            Func<PointD, Point> convert = (p) => new Point(
+                            convert = (p) => new Point(
                                 (int)((p.X + dataSource.Settings.HorOffset) * pxPerUnits_hor) + viewPort.X,
                                 (int)(zeroPos - (p.Y + 0) * pxPerUnits_ver));
-
-                            marker.Draw(g, dataSource.Settings.Style, viewPort, convert);
+                            rowKey = freeLabelRow;
                         }
+                        else
+                            continue;
 
+                        if (!rows.TryGetValue(rowKey, out LabelRow? row))
+                            rows[rowKey] = row = new LabelRow();
+
+                        Color color = marker.Color;
+                        if (!pens.TryGetValue(color, out Pen? pen))
+                            pens[color] = pen = new Pen(color);
+
+                        marker.Draw(g, style, viewPort, convert, pen, row);
                     }
                 }
                 catch (Exception ex)
                 {
                     g.DrawString(ex.Message, dataSource.Settings.Style.Font, errBrush, new Point(0, (errNo++) * dataSource.Settings.Style.Font.Height));
+                }
+                finally
+                {
+                    foreach (Pen pen in pens.Values)
+                        pen.Dispose();
                 }
 
                 try
@@ -908,10 +915,15 @@ namespace FormsLib.Scope.Controls
 
         }
 
+        /// <summary>
+        /// Only the markers or the hover popup changed: repaint from the cached data layer. Invalidate
+        /// rather than Refresh, so a burst of mouse moves turns into one paint instead of one each.
+        /// </summary>
         private void DrawForeground()
         {
-            pictureBox3.InvokeIfRequired(() => pictureBox3.Refresh());
+            canvas.InvokeIfRequired(() => canvas.Invalidate());
         }
+
         void DrawForeground(Graphics g)
         {
             var stopwatch = Stopwatch.StartNew();
@@ -1083,30 +1095,44 @@ namespace FormsLib.Scope.Controls
         #endregion
 
 
+        /// <summary>
+        /// Something the background or data show changed: render the data layer again on the next
+        /// paint. Invalidate rather than Refresh, so changes that come in faster than a frame can be
+        /// drawn (wheel zoom, dragging the view) are drawn once, not queued up one frame each.
+        /// </summary>
         private void DrawAll()
         {
-            DrawBackground();
-            DrawData();
-            DrawForeground();
+            dataLayerDirty = true;
+            canvas.InvokeIfRequired(() => canvas.Invalidate());
         }
 
-        //Draw the background
-        private void PictureBox1_Paint(object sender, PaintEventArgs e)
+        private void Canvas_Paint(object? sender, PaintEventArgs e)
         {
-            Graphics g = e.Graphics;
-            DrawBackground(g);
-        }
+            Size size = canvas.ClientSize;
+            if (size.Width <= 0 || size.Height <= 0)
+                return;
 
-        private void PictureBox2_Paint(object sender, PaintEventArgs e)
-        {
-            Graphics g = e.Graphics;
-            DrawData(g);
-        }
+            if (dataLayer == null || dataLayerSize != size)
+            {
+                dataLayer?.Dispose();
+                dataLayer = null;
+                // Allocate only keeps the buffer in this context when it fits MaximumBuffer.
+                dataLayerContext.MaximumBuffer = new Size(size.Width + 1, size.Height + 1);
+                dataLayer = dataLayerContext.Allocate(e.Graphics, new Rectangle(Point.Empty, size));
+                dataLayerSize = size;
+                dataLayerDirty = true;
+            }
 
-        private void PictureBox3_Paint(object sender, PaintEventArgs e)
-        {
-            Graphics g = e.Graphics;
-            DrawForeground(g);
+            if (dataLayerDirty)
+            {
+                dataLayerDirty = false;
+                Graphics layer = dataLayer.Graphics;
+                DrawBackground(layer);
+                DrawData(layer);
+            }
+
+            dataLayer.Render(e.Graphics);
+            DrawForeground(e.Graphics);
         }
 
         private void Markers_ListChanged(object sender, ListChangedEventArgs e)
@@ -1116,7 +1142,7 @@ namespace FormsLib.Scope.Controls
 
         private void Traces_ListChanged(object sender, ListChangedEventArgs e)
         {
-            DrawData();
+            DrawAll();
         }
 
         private void Form_ResizeEnd(object sender, EventArgs e)
