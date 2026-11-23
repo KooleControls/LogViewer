@@ -3,7 +3,7 @@
 Notable changes to LogViewer. Release downloads:
 https://github.com/KooleControls/LogViewer/releases
 
-## Unreleased
+## v3.13.0
 
 ### Changed
 - **Faster scope view.** A day of gateway logging could take around 200 ms per frame, so panning, zooming and Ctrl-hover lagged. The view now keeps its rendered data and only redraws it when the view or the data changes. Moving a marker or the hover popup no longer redraws the data, and panning and zooming draw several times faster.
